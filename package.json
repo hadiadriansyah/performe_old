@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@balkangraph/orgchart.js": "^8.14.42",
+    "bootstrap-datepicker": "^1.10.0",
+    "crypto-js": "^4.2.0",
+    "jquery": "^3.7.1",
+    "jquery-asColorPicker": "^0.4.4",
+    "jquery-toast-plugin": "^1.3.2",
+    "lodash": "^4.17.21",
+    "select2": "^4.1.0-rc.0",
+    "select2-bootstrap-theme": "^0.1.0-beta.10",
+    "spectrum-colorpicker": "^1.8.1",
+    "sweetalert": "^2.1.2"
+  }
+}
