@@ -17528,6 +17528,90 @@ code {
   border: 1px solid #3e4b5b;
 }
 
+/* Bootstrap Alerts */
+.alert {
+  font-size: 0.875rem;
+}
+.alert i {
+  font-size: 1.25rem;
+  margin-right: 1.25rem;
+  vertical-align: middle;
+  line-height: 0.5;
+}
+
+.alert-primary {
+  color: #b66dff;
+}
+
+.alert-secondary {
+  color: #c3bdbd;
+}
+
+.alert-success {
+  color: #1bcfb4;
+}
+
+.alert-info {
+  color: #198ae3;
+}
+
+.alert-warning {
+  color: #fed713;
+}
+
+.alert-danger {
+  color: #fe7c96;
+}
+
+.alert-light {
+  color: #f8f9fa;
+}
+
+.alert-dark {
+  color: #3e4b5b;
+}
+
+.alert-fill-primary {
+  color: white;
+  background: #b66dff;
+}
+
+.alert-fill-secondary {
+  color: white;
+  background: #c3bdbd;
+}
+
+.alert-fill-success {
+  color: white;
+  background: #1bcfb4;
+}
+
+.alert-fill-info {
+  color: white;
+  background: #198ae3;
+}
+
+.alert-fill-warning {
+  color: white;
+  background: #fed713;
+}
+
+.alert-fill-danger {
+  color: white;
+  background: #fe7c96;
+}
+
+.alert-fill-light {
+  color: white;
+  background: #f8f9fa;
+}
+
+.alert-fill-dark {
+  color: white;
+  background: #3e4b5b;
+}
+
+
 /* Bootstrap Progress */
 .progress {
   border-radius: 3px;

@@ -44,15 +44,28 @@
                             <form id="formKPI">
                                 <input type="hidden" class="form-control" id="id" name="id" placeholder="">
                                 <div class="form-group row">
-                                    <label for="kpi" class="col-sm-3 col-form-label">KPI</label>
-                                    <div class="col-sm-9">
+                                    <label for="kpi" class="col-sm-4 col-form-label">KPI</label>
+                                    <div class="col-sm-8">
                                         <input type="text" class="form-control" id="kpi" name="kpi" placeholder="KPI">
                                         <div class="error-message text-small text-danger mt-1" id="error-kpi"></div>
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="yearPeriodId" class="col-sm-3 col-form-label">Year Period</label>
-                                    <div class="col-sm-9">
+                                    <label for="measurement" class="col-sm-4 col-form-label">Measurement</label>
+                                    <div class="col-sm-8">
+                                        <select type="text" class="form-control select2-js-basic" style="width: 100%" id="measurement" name="measurement">
+                                            <option value="">- Choose -</option>
+                                            <option value="Juta Rupiah">Juta Rupiah</option>
+                                            <option value="Percentage %">Percentage %</option>
+                                            <option value="Bilangan">Bilangan</option>
+                                            <option value="Index">Index</option>
+                                        </select>
+                                        <div class="error-message text-small text-danger mt-1" id="error-measurement"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="yearPeriodId" class="col-sm-4 col-form-label">Year Period</label>
+                                    <div class="col-sm-8">
                                         <select type="text" class="form-control select2-js-server" style="width: 100%;" 
                                         id="yearPeriodId" name="year_period_id" placeholder="Year Period">
                                             <option value="">-- Choose --</option>
@@ -61,8 +74,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="kpiCounterId" class="col-sm-3 col-form-label">Counter</label>
-                                    <div class="col-sm-9">
+                                    <label for="kpiCounterId" class="col-sm-4 col-form-label">Counter</label>
+                                    <div class="col-sm-8">
                                         <select type="text" class="form-control select2-js-server" style="width: 100%;" 
                                         id="kpiCounterId" name="kpi_counter_id" placeholder="Counter">
                                             <option value="">-- Choose --</option>
@@ -71,8 +84,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="kpiPolarizationId" class="col-sm-3 col-form-label">Polarization</label>
-                                    <div class="col-sm-9">
+                                    <label for="kpiPolarizationId" class="col-sm-4 col-form-label">Polarization</label>
+                                    <div class="col-sm-8">
                                         <select type="text" class="form-control select2-js-server" style="width: 100%;" 
                                         id="kpiPolarizationId" name="kpi_polarization_id" placeholder="Polarization">
                                             <option value="">-- Choose --</option>
@@ -81,8 +94,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="description" class="col-sm-3 col-form-label">Desc</label>
-                                    <div class="col-sm-9">
+                                    <label for="description" class="col-sm-4 col-form-label">Desc</label>
+                                    <div class="col-sm-8">
                                         <textarea type="text" class="form-control" id="description" name="description" placeholder="Description"></textarea>
                                         <div class="error-message text-small text-danger mt-1" id="error-description"></div>
                                     </div>
@@ -106,6 +119,7 @@
                             <tr>
                                 <th class="text-center">No</th>
                                 <th class="text-left">KPI</th>
+                                <th class="text-left">Measurement</th>
                                 <th class="text-left">Counter</th>
                                 <th class="text-left">Polarization</th>
                                 <th class="text-left">Desc</th>

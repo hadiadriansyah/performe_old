@@ -1,15 +1,15 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Kpi_unit_type extends CI_Controller {
+class Kpi_position extends CI_Controller {
 
     protected $repository;
     protected $secretPass;
 
     public function __construct() {
         parent::__construct();
-        $this->load->repository('mapping/Kpi_unit_type_repository');
-        $this->repository = new Kpi_unit_type_repository();
+        $this->load->repository('mapping/Kpi_position_repository');
+        $this->repository = new Kpi_position_repository();
         $this->secretPass = 'Secret Passphrase';
 
         $this->load->library('Base_controller', null, 'bc');
@@ -19,12 +19,12 @@ class Kpi_unit_type extends CI_Controller {
 
     public function index() {
         $data = array_merge($this->bc->get_global(), [
-            'title' => 'KPI Unit Types',
+            'title' => 'KPI Positions',
             'js' => [
-                'admin/mapping/unit_type.js',
+                'admin/mapping/position.js',
             ],
         ]);
-        $this->template->load('admin', 'admin/mapping/kpi/unit_type/index', $data);
+        $this->template->load('admin', 'admin/mapping/kpi/position/index', $data);
     }
 
     public function kpi() {
@@ -34,12 +34,12 @@ class Kpi_unit_type extends CI_Controller {
             redirect('goals_settings/unit_kpi/index');
         }
         $data = array_merge($this->bc->get_global(), json_decode($decryptedData, true), [
-            'title' => 'KPI Unit Types',
+            'title' => 'KPI Positions',
             'js' => [
-                'admin/mapping/kpi_unit_type.js'
+                'admin/mapping/kpi_position.js'
             ],
         ]);
-        $this->template->load('admin', 'admin/mapping/kpi/unit_type/kpi', $data);
+        $this->template->load('admin', 'admin/mapping/kpi/position/kpi', $data);
     }
 
     // Mapping Data
@@ -57,7 +57,7 @@ class Kpi_unit_type extends CI_Controller {
 
     private function validate_input_mapping_data() {
         $this->form_validation->set_rules('year_period_id', 'Year Period', 'required|trim');
-        $this->form_validation->set_rules('unit_type', 'Unit Type', 'required|trim');
+        $this->form_validation->set_rules('position_group', 'Position', 'required|trim');
         $this->form_validation->set_rules('group_id', 'Group', 'required|trim');
         $this->form_validation->set_error_delimiters('', '');
         return $this->form_validation->run();
@@ -71,15 +71,15 @@ class Kpi_unit_type extends CI_Controller {
     private function collect_form_errors_mapping_data() {
         return [
             'year_period_id' => form_error('year_period_id'),
-            'unit_type' => form_error('unit_type'),
+            'position_group' => form_error('position_group'),
             'group_id' => form_error('group_id'),
         ];
     }
 
     private function collect_input_mapping_data() {
         $input_data = [
-            'unit_type' => $this->input->post('unit_type'),
-            'unit_type_name' => $this->input->post('unit_type_name'),
+            'position_group' => $this->input->post('position_group'),
+            'position_group_name' => $this->input->post('position_group_name'),
             'year_period_id' => $this->input->post('year_period_id'),
             'year_period_name' => $this->input->post('year_period_name'),
             'group_id' => $this->input->post('group_id'),
@@ -136,7 +136,7 @@ class Kpi_unit_type extends CI_Controller {
         $input_data = [
             'id' => $this->input->post('id'),
             'year_period_id' => $this->input->post('year_period_id'),
-            'unit_type' => $this->input->post('unit_type'),
+            'position' => $this->input->post('position'),
             'group_id' => $this->input->post('group_id'),
             'kpi_id' => $this->input->post('kpi_id'),
             'weight' => $this->input->post('weight'),
@@ -196,14 +196,14 @@ class Kpi_unit_type extends CI_Controller {
     }
 
     private function validate_input_group() {
-        $this->form_validation->set_rules('group_type', 'Group Type', 'required|trim');
+        $this->form_validation->set_rules('group_position', 'Group Position', 'required|trim');
         $this->form_validation->set_error_delimiters('', '');
         return $this->form_validation->run();
     }
 
     private function collect_input_data_group($is_store = false, $id = null) {
         $input_data = [
-            'group_type' => $this->input->post('group_type'),
+            'group_position' => $this->input->post('group_position'),
             'description' => $this->input->post('description'),
         ];
 
@@ -229,7 +229,7 @@ class Kpi_unit_type extends CI_Controller {
 
     private function collect_form_errors_group() {
         return [
-            'group_type' => form_error('group_type'),
+            'group_position' => form_error('group_position'),
         ];
     }
 
@@ -263,41 +263,41 @@ class Kpi_unit_type extends CI_Controller {
         $this->json_response->{$store ? 'success' : 'error'}($message, $store);
     }
 
-    public function update_selected_units() {
+    public function update_selected_positions() {
         $group_id = $this->input->post('group_id');
-        $added_units = json_decode($this->input->post('added_units'), true);
-        $removed_units = json_decode($this->input->post('removed_units'), true);
+        $added_positions = json_decode($this->input->post('added_positions'), true);
+        $removed_positions = json_decode($this->input->post('removed_positions'), true);
     
         $this->db->trans_begin();
     
         try {
-            if (!empty($removed_units)) {
-                $this->repository->delete_units($group_id, $removed_units);
+            if (!empty($removed_positions)) {
+                $this->repository->delete_positions($group_id, $removed_positions);
             }
     
-            if (!empty($added_units)) {
-                $unitsToInsert = array_map(function($unit_id) use ($group_id) {
+            if (!empty($added_positions)) {
+                $positionsToInsert = array_map(function($position_id) use ($group_id) {
                     return [
                         'group_id' => $group_id,
-                        'unit_id' => $unit_id
+                        'position_id' => $position_id
                     ];
-                }, $added_units);
-                $this->repository->store_units($unitsToInsert);
+                }, $added_positions);
+                $this->repository->store_positions($positionsToInsert);
             }
     
             if ($this->db->trans_status() === FALSE) {
                 $this->db->trans_rollback();
-                $this->json_response->error('Failed to update selected units.');
+                $this->json_response->error('Failed to update selected positions.');
             } else {
                 $this->db->trans_commit();
-                $this->json_response->success('Selected units updated successfully.', [
-                    'added_units' => $added_units,
-                    'removed_units' => $removed_units
+                $this->json_response->success('Selected positions updated successfully.', [
+                    'added_positions' => $added_positions,
+                    'removed_positions' => $removed_positions
                 ]);
             }
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            $this->json_response->error('Failed to update selected units.', ['error' => $e->getMessage()]);
+            $this->json_response->error('Failed to update selected positions.', ['error' => $e->getMessage()]);
         }
     }
     
@@ -317,12 +317,12 @@ class Kpi_unit_type extends CI_Controller {
 
     public function submit_kpi() {
         $input_data = [
-            'unit_type' => $this->input->post('unit_type'),
+            'position' => $this->input->post('position'),
             'year_period_id' => $this->input->post('year_period_id'),
-            'group_id' => $this->input->post('group_id'),
+            'group_id' => $this->input->post('group_position_id'),
             'is_submit' => $this->input->post('is_submit'),
         ];
-        if (!isset($input_data['unit_type']) || !isset($input_data['year_period_id']) || !isset($input_data['group_id'])) {
+        if (!isset($input_data['position']) || !isset($input_data['year_period_id']) || !isset($input_data['group_id'])) {
             $this->json_response->error('Unit or Year Period or Group is required.');
             return;
         }
@@ -346,15 +346,53 @@ class Kpi_unit_type extends CI_Controller {
 
     #####
 
+    public function create_kpi() {
+        $data = $this->input->post();
+        $kpi = $this->repository->get_kpi_unit_type_by_group_unit_type_id($data);
+        if ($kpi) {
+            $this->db->trans_begin();
+            try {
+                foreach ($kpi as $item) {
+                    $store = [
+                        'position' => $data['position'],
+                        'year_period_id' => $data['year_period_id'],
+                        'perspective_id' => $item->perspective_id,
+                        'objective_id' => $item->objective_id,
+                        'kpi_id' => $item->kpi_id,
+                        'weight' => $item->weight,
+                        'score' => $item->score,
+                        'description' => $item->description,
+                        'is_submit' => 0,
+                        'created_by' => $this->bc->get_global()['vendor_id'],
+                        'updated_by' => $this->bc->get_global()['vendor_id'],
+                        'group_id' => $data['group_position_id']
+                    ];
+                    $this->repository->store($store);
+                }
+                if ($this->db->trans_status() === FALSE) {
+                    $this->db->trans_rollback();
+                    $this->json_response->error('Failed to insert KPI data.');
+                } else {
+                    $this->db->trans_commit();
+                    $this->json_response->success('KPI data successfully inserted.');
+                }
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                $this->json_response->error('Failed to insert KPI data.', ['error' => $e->getMessage()]);
+            }
+        } else {
+            $this->json_response->error('KPI for this unit is not available. Please check again and try submitting.', $kpi);
+        }
+    }
+
     public function generate_kpi() {
         $data = $this->input->post();
 
-        // $units = $this->repository->get_unit_by_unit_type($data['unit_type']);
-        $units = $this->repository->get_units_by_group_id($data['group_id']);
-        $kpis = $this->repository->get_kpi_unit_type($data);
+        $positions = $this->repository->get_positions_by_group_id($data['group_id']);
+        $kpis = $this->repository->get_kpi_position($data);
 
         $result = [
-            'units' => $units ?? [],
+            'positions' => $positions ?? [],
             'kpis' => $kpis ?? []
         ];
 
@@ -376,15 +414,15 @@ class Kpi_unit_type extends CI_Controller {
 
     #####
 
-    public function get_unit_by_unit_type() {
-        $unit_type = $this->input->post('unit_type');
-        $units = $this->repository->get_unit_by_unit_type($unit_type);
-        $this->json_response->success('Data successfully fetched.', $units);
+    public function get_position_by_position_group() {
+        $position_group = $this->input->post('position_group');
+        $positions = $this->repository->get_position_by_position_group($position_group);
+        $this->json_response->success('Data successfully fetched.', $positions);
     }
 
-    public function get_kpi_unit_type() {
+    public function get_kpi_position() {
         $data = $this->input->post();
-        $kpi = $this->repository->get_kpi_unit_type($data);
+        $kpi = $this->repository->get_kpi_position($data);
         $this->json_response->success('Data successfully fetched.', $kpi);
     }
 
@@ -436,8 +474,19 @@ class Kpi_unit_type extends CI_Controller {
         $this->json_response->{$data ? 'success' : 'error'}($message, $data);
     }
 
-    public function get_units_by_group_id($id) {
-        $data = $this->repository->get_units_by_group_id($id);
+    public function get_positions_by_group_id($id) {
+        $data = $this->repository->get_positions_by_group_id($id);
+        $this->json_response->success('Data successfully fetched.', $data);
+    }
+
+    public function get_kpi_position_groups_options() {
+        $search = $this->input->get('q');
+        $page = $this->input->get('page');
+        $result = $this->repository->get_kpi_position_groups_options($search, $page);
+        $data = [
+            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_position], $result['data'])),
+            'total_count' => $result['total']
+        ];
         $this->json_response->success('Data successfully fetched.', $data);
     }
 
@@ -463,12 +512,27 @@ class Kpi_unit_type extends CI_Controller {
         $this->json_response->success('Data successfully fetched.', $data);
     }
 
+    public function get_position_group_options() {
+        $search = $this->input->get('q');
+        $page = $this->input->get('page');
+        $result = $this->repository->get_position_group_options($search, $page);
+        $data = [
+            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->orchart_label, 'text' => $item->orchart_label], $result['data'])),
+            'total_count' => $result['total']
+        ];
+        $this->json_response->success('Data successfully fetched.', $data);
+    }
+
     public function get_unit_options() {
         $data = $this->bc->get_global();
         $search = $this->input->get('q');
         $page = $this->input->get('page');
-
-        $result = $this->repository->get_unit_options($search, $page);
+        if ($data['employee_id']) {
+            $unit = $this->repository->get_unit_options_by_unit_id($data);
+        } else {
+            $unit = $this->repository->get_unit_options($search, $page);
+        }
+        $result = $unit;
         $data = [
             'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data'])),
             'total_count' => $result['total']

@@ -21,7 +21,7 @@
                         <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">Unit KPIs</h4>
                             <button type="button" class="btn btn-light btn-submit-kpi is-submit-kpi d-none" disabled>Submit</button>
-                            <?php if (!$is_admin): ?>
+                            <?php if ($is_admin == SYSTEM_ADMIN): ?>
                                 <button type="button" class="btn btn-light btn-cancel-submit-kpi is-submit-kpi d-none">Cancel Submit</button>
                             <?php endif; ?>
                         </div>

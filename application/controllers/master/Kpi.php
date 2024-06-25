@@ -48,6 +48,7 @@ class Kpi extends CI_Controller {
             'no' => $no,
             'id' => $item->id,
             'kpi' => $item->kpi,
+            'measurement' => $item->measurement,
             'counter' => $item->counter,
             'polarization' => $item->polarization,
             'description' => $item->description,
@@ -133,6 +134,7 @@ class Kpi extends CI_Controller {
     private function validate_input() {
         $this->form_validation->set_rules('kpi', 'KPI', 'required');
         $this->form_validation->set_rules('kpi_counter_id', 'KPI Counter', 'required');
+        $this->form_validation->set_rules('measurement', 'Measurement', 'required');
         $this->form_validation->set_rules('kpi_polarization_id', 'KPI Polarization', 'required');
         $this->form_validation->set_rules('year_period_id', 'Year Period', 'required|trim');
         $this->form_validation->set_error_delimiters('', '');
@@ -143,6 +145,7 @@ class Kpi extends CI_Controller {
         $input_data = [
             'kpi' => $this->input->post('kpi'),
             'kpi_counter_id' => $this->input->post('kpi_counter_id'),
+            'measurement' => $this->input->post('measurement'),
             'kpi_polarization_id' => $this->input->post('kpi_polarization_id'),
             'description' => $this->input->post('description'),
             'year_period_id' => $this->input->post('year_period_id'),
@@ -172,6 +175,7 @@ class Kpi extends CI_Controller {
         return [
             'kpi' => form_error('kpi'),
             'kpi_counter_id' => form_error('kpi_counter_id'),
+            'measurement' => form_error('measurement'),
             'kpi_polarization_id' => form_error('kpi_polarization_id'),
             'year_period_id' => form_error('year_period_id'),
         ];

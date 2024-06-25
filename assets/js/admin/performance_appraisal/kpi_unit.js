@@ -6,12 +6,12 @@
     const kpiUnitYearPeriodId = getKpiUnitYearPeriodIdVal();
     const kpiUnitUnitId = getKpiUnitUnitIdVal();
     let dataKpi = [];
-    let dataKpiBeforeEdit = []
     let indexScoreRule = [];
     const newItemKPI = {
         perspective_id: null,
         perspective: null,
-        is_submit: 2,
+        is_submit_target: 0,
+        is_submit_actual: 0,
         total_weight_perspective: 0,
         total_score_perspective: 0,
         objective_detail: [{
@@ -22,7 +22,6 @@
                 perspective_id: null,
                 objective_id: null,
                 kpi_id: null,
-                measurement: null,
                 target_id: null,
                 actual_id: null,
                 weight: 0,
@@ -33,7 +32,8 @@
             total_score: 0
         }]
     };
-    let kpiIsSubmit = 0;
+    let kpiIsSubmitTarget = 0;
+    let kpiIsSubmitActual = 0;
 
     $(initializePage);
 
@@ -114,11 +114,21 @@
                 const result = await response.json();
                 const data = result.data;
                 dataKpi = await processKpiData(data);
-                const totalWeightSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
-                const totalScoreSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_score_perspective), 0);
-                updatePercentage(totalWeightSum);
-                updateScore(totalScoreSum);
-                renderKPI();
+                
+
+                if (kpiIsSubmitTarget == 1) {
+                    const totalWeightSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
+                    const totalScoreSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_score_perspective), 0);
+                    updatePercentage(totalWeightSum);
+                    updateScore(totalScoreSum);
+                    renderKPI();
+                } else {
+                    $('#kpiContainer').html(`
+                        <div class="alert alert-fill-danger" role="alert">
+                            <i class="mdi mdi-alert-circle"></i> Oh snap!. KPI for this unit is not available. Please check again and try submitting.
+                        </div>
+                    `);
+                }
             } catch (error) {
                 displayToast('Error', 'Error fetching KPI', 'error');
             }
@@ -126,12 +136,17 @@
     }
 
     function toggleSubmitButton() {
-        if (kpiIsSubmit == 1) {
+        if (kpiIsSubmitTarget != 1) {
             $('.is-submit-kpi').addClass('d-none');
-            $('.btn-cancel-submit-kpi').removeClass('d-none');
-        } else {
-            $('.is-submit-kpi').removeClass('d-none');
             $('.btn-cancel-submit-kpi').addClass('d-none');
+        } else {
+            if (kpiIsSubmitActual == 1) {
+                $('.is-submit-kpi').addClass('d-none');
+                $('.btn-cancel-submit-kpi').removeClass('d-none');
+            } else {
+                $('.is-submit-kpi').removeClass('d-none');
+                $('.btn-cancel-submit-kpi').addClass('d-none');
+            }
         }
     }
 
@@ -144,7 +159,8 @@
                 acc[perspective] = {
                     perspective_id: item.perspective_id,
                     perspective: item.perspective,
-                    is_submit: item.is_submit,
+                    is_submit_target: item.is_submit_target,
+                    is_submit_actual: item.is_submit_actual,
                     total_weight_perspective: 0,
                     total_score_perspective: 0,
                     objective_detail: []
@@ -168,7 +184,6 @@
                 perspective_id: item.perspective_id,
                 objective_id: item.objective_id,
                 kpi_id: item.kpi_id,
-                measurement: item.measurement,
                 target_id: item.target_id,
                 actual_id: item.actual_id,
                 weight: item.weight,
@@ -180,7 +195,8 @@
             objectiveDetail.total_score += parseFloat(item.score);
             acc[perspective].total_weight_perspective += parseFloat(item.weight);
             acc[perspective].total_score_perspective += parseFloat(item.score);
-            kpiIsSubmit = item.is_submit_actual;
+            kpiIsSubmitTarget = item.is_submit_target;
+            kpiIsSubmitActual = item.is_submit_actual;
             return acc;
         }, {});
 
@@ -256,14 +272,7 @@
                                 <div class="error-message text-small text-danger mt-1" id="error-kpi_id-${kpi.id}"></div>
                             </td>
                             <td>
-                                <select type="text" class="form-control select2-js-basic" style="width: 200px" id="measurement-${kpi.id}" name="measurement-${kpi.id}" disabled>
-                                    <option value="">- Choose -</option>
-                                    <option value="Juta Rupiah">Juta Rupiah</option>
-                                    <option value="Percentage %">Percentage %</option>
-                                    <option value="Bilangan">Bilangan</option>
-                                    <option value="Index">Index</option>
-                                </select>
-                                <div class="error-message text-small text-danger mt-1" id="error-measurement-${kpi.id}"></div>
+                               <span id="measurement-${kpi.id}">-</span>
                             </td>
                             <td>
                                 <button type="button" id="target-${kpi.id}" class="btn btn-sm btn-modal-target-actual ${kpi.target_id ? 'text-success' : 'text-danger'}" data-bs-toggle="modal" data-bs-target="#modalTargetActual" data-mode="modalTarget" data-id="${kpi.id}" disabled>0</button>
@@ -324,13 +333,13 @@
     }
 
     async function setupValueKpi(kpi) {
-        $(`#measurement-${kpi.id}`).val(kpi.measurement).trigger('change');
         $(`#targetId-${kpi.id}`).text(kpi.target_id);
         $(`#actualId-${kpi.id}`).text(kpi.actual_id);
 
         if (kpi.kpi_id) {
             const data = await getKpiById(kpi.kpi_id);
             if (data) {
+                $(`#measurement-${kpi.id}`).text(data.measurement);
                 $(`#counter-${kpi.id}`).text(data.counter);
                 $(`#polarization-${kpi.id}`).text(data.polarization);
                 $(`#formula-${kpi.id}`).text(data.formula);
@@ -345,6 +354,7 @@
             const id = $(this).val();
             const data = await getKpiById(id);
             if (data) {
+                $(`#measurement-${kpi.id}`).text(data.measurement);
                 $(`#counter-${kpi.id}`).text(data.counter);
                 $(`#polarization-${kpi.id}`).text(data.polarization);
                 $(`#formula-${kpi.id}`).text(data.formula);
@@ -518,9 +528,9 @@
 
             const selectedUnit = $(`#kpiId-${id}`).find('option:selected');
             const unitName = selectedUnit.text();
+            const measurement = $(`#measurement-${id}`).text();
             const counter = $(`#counter-${id}`).text();
             const polarization = $(`#polarization-${id}`).text();
-            const measurement = $(`#measurement-${id}`).val();
             const targetId = $(`#targetId-${id}`).text();
             const actualId = $(`#actualId-${id}`).text();
             const targetMonth = (() => {
@@ -541,9 +551,9 @@
             $('#kpiUnitId').val(id);
             $('#kpiName').val(unitName);
             $('#modeKpi').val(modeKpi);
+            $('#measurementText').val(measurement);
             $('#polarizationText').val(polarization);
             $('#counterText').val(counter);
-            $('#measurementText').val(measurement);
             if (mode === 'modalTarget') {
                 if (targetId) {
                     $('#targetId').val(targetId);

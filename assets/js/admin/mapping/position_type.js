@@ -2,8 +2,8 @@
     'use strict';
 
     let mode;
-    let currentSelectedUnits = [];
-    let previousSelectedUnits = [];
+    let currentSelectedPositions = [];
+    let previousSelectedPositions = [];
     let selectedGroupId = null;
     let isSubmitting = false;
     let isChangingGroupId = false; 
@@ -30,7 +30,31 @@
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_unit_type/get_year_period_options`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_year_period_options`,
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({
+                        q: params.term || '',
+                        page: params.page || 1
+                    }),
+                    processResults: (data, params) => ({
+                        results: data.data.items,
+                        pagination: {
+                            more: (params.page * 10) < data.total_count
+                        }
+                    }),
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+        })
+
+        $('#positionType').each(function () {
+            $(this).select2({
+                theme: 'bootstrap',
+                dropdownParent: $(this).parent(),
+                ajax: {
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_position_type_options`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
@@ -54,7 +78,7 @@
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_unit_type/get_kpi_unit_type_groups_options`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_kpi_position_type_groups_options`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
@@ -72,19 +96,20 @@
                 minimumInputLength: 0
             });
         })
-        $('#unitType').change(async function() {
+        
+        $('#positionType').change(async function() {
             const selectedValue = $(this).val();
             isChangingGroupId = false;
 
             $('#groupId').val('').trigger('change');
 
             if (selectedValue) {
-                $(`#formMapping`).find(`#error-unit_type`).html('');
-                await getUnitTypeList(selectedValue);
+                $(`#formMapping`).find(`#error-position_type`).html('');
+                await getPositionList(selectedValue);
             } else {
-                $(`#formMapping`).find(`#error-unit_type`).html('Please select unit type first');
+                $(`#formMapping`).find(`#error-position_type`).html('Please select position first');
                 $('#groupId').val('').trigger('change');
-                $('#groupUnitContainer').addClass('d-none')
+                $('#groupTypeContainer').addClass('d-none')
             }
         });
 
@@ -93,10 +118,10 @@
             isChangingGroupId = true;
 
             const selectedValue = $(this).val();
-            const selectedUnitType = $('#unitType').val();
+            const selectedPositionGroup = $('#positionType').val();
 
-            if (!selectedUnitType) {
-                $(`#formMapping`).find(`#error-unit_type`).html('Please select unit type first');
+            if (!selectedPositionGroup) {
+                $(`#formMapping`).find(`#error-position_type`).html('Please select position first');
                 $('#groupId').val('').trigger('change');
                 isChangingGroupId = false;
                 return;
@@ -110,34 +135,34 @@
     }
 
     async function handleGroupChange(groupId) {
-        currentSelectedUnits = [];
-        previousSelectedUnits = [];
+        currentSelectedPositions = [];
+        previousSelectedPositions = [];
         
         toggleUpdateButton();
         if (groupId) {
             $('.checkbox').prop('checked', false).prop('disabled', false);
             $('#btnModalEditGroup, #btnModalDeleteGroup').removeClass('d-none');
 
-            await fetchUnitsByGroupId(groupId);
+            await fetchPositionsByGroupId(groupId);
         } else {
             $('.checkbox').prop('checked', false).prop('disabled', true);
             $('#btnModalEditGroup, #btnModalDeleteGroup').addClass('d-none');
         }
     }
 
-    async function fetchUnitsByGroupId(groupId) {
+    async function fetchPositionsByGroupId(groupId) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_units_by_group_id/${groupId}`, { method: 'GET' });
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_positions_by_group_id/${groupId}`, { method: 'GET' });
             const result = await response.json();
-            const units = result.data;
+            const positions = result.data;
 
-            units.forEach(unit => {
-                $(`.checkbox[value="${unit.unit_id}"]`).prop('checked', true);
-                currentSelectedUnits.push(unit.unit_id);
-                previousSelectedUnits.push(unit.unit_id);
+            positions.forEach(position => {
+                $(`.checkbox[value="${position.id}"]`).prop('checked', true);
+                currentSelectedPositions.push(position.id);
+                previousSelectedPositions.push(position.id);
             });
         } catch (error) {
-            displayToast('Error', 'Error fetching units data', 'error');
+            displayToast('Error', 'Error fetching positions data', 'error');
         }
         
     }
@@ -178,9 +203,10 @@
 
     async function fetchGroupData(id) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_group_by_id/${id}`, { method: 'GET' });
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_group_by_id/${id}`, { method: 'GET' });
             const result = await response.json();
             const data = result.data;
+            console.log(data)
             $('#id').val(data.id);
             $('#groupType').val(data.group_type);
             $('#description').val(data.description);
@@ -216,7 +242,7 @@
     async function deleteData(id) {
         toggleBarLoader(null, true);
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/delete_group`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/delete_group`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ id }).toString()
@@ -235,26 +261,26 @@
         toggleBarLoader(null, false);
     }
 
-    async function getUnitTypeList(unitType) {
+    async function getPositionList(positionType) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_unit_by_unit_type`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_position_by_position_type`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    unit_type: unitType
+                    position_type: positionType
                 }).toString()
             });
             const result = await response.json();
-            displayUnitList(result.data);
+            displayPositionList(result.data);
         } catch (error) {}
     }
 
-    async function displayUnitList(data) {
-        const groupUnitContainer = $('#groupUnitContainer');
-        groupUnitContainer.empty();
+    async function displayPositionList(data) {
+        const groupTypeContainer = $('#groupTypeContainer');
+        groupTypeContainer.empty();
     
-        const title = $('<h5>Unit List</h5>');
-        groupUnitContainer.append(title);
+        const title = $('<h5>Position List</h5>');
+        groupTypeContainer.append(title);
     
         const row = $('<div class="row"></div>');
     
@@ -266,7 +292,7 @@
                                                     <label class="form-check-label"><input id="selectAll" class="checkbox" type="checkbox" data-bs-toggle="tooltip" data-placement="right" title="Select All" value=""> Select All </label>
                                                 </div>
                                                 <div class="w-100"></div>
-                                                <button type="button" id="btnUpdateSelectedUnit" class="btn btn-inverse-primary d-none">Update</button>
+                                                <button type="button" id="btnUpdateSelectedPosition" class="btn btn-inverse-primary d-none">Update</button>
                                             </li>
                                         </ul>
                                     </div>
@@ -276,9 +302,9 @@
         const column1 = $('<div class="col-6 list-wrapper"><ul></ul></div>');
         const column2 = $('<div class="col-6 list-wrapper"><ul></ul></div>');
     
-        data.forEach((unit, index) => {
-            const checkbox = $(`<input class="checkbox" type="checkbox" data-bs-toggle="tooltip" data-placement="right" title="${unit.nm_unit_kerja}">`).val(unit.id);
-            const label = $(`<label class="form-check-label"></label>`).text(unit.nm_unit_kerja);
+        data.forEach((position, index) => {
+            const checkbox = $(`<input class="checkbox" type="checkbox" data-bs-toggle="tooltip" data-placement="right" title="${position.nm_jabatan}">`).val(position.id);
+            const label = $(`<label class="form-check-label"></label>`).text(position.nm_jabatan);
             const formCheck = $(`<div class="form-check"></div>`).append(label.prepend(checkbox));
             const listItem = $(`<li></li>`).append(formCheck);
     
@@ -290,8 +316,8 @@
         });
     
         row.append(column1).append(column2);
-        groupUnitContainer.append(row);
-        groupUnitContainer.removeClass('d-none');
+        groupTypeContainer.append(row);
+        groupTypeContainer.removeClass('d-none');
         $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
 
         if ($('#groupId').val()) {
@@ -302,8 +328,8 @@
 
         handleSelectAll();
         handleCheckboxChange();
-        $('#btnUpdateSelectedUnit').click(function() {
-            updateSelectedUnitsData();
+        $('#btnUpdateSelectedPosition').click(function() {
+            updateSelectedPositionsData();
         });
     }
 
@@ -312,7 +338,7 @@
             const checkboxes = $('.checkbox');
             checkboxes.prop('checked', $(this).prop('checked'));
             checkboxes.each(function() {
-                updateSelectedUnits($(this).val(), $(this).prop('checked'));
+                updateSelectedPositions($(this).val(), $(this).prop('checked'));
             });
             toggleUpdateButton();
         });
@@ -320,7 +346,7 @@
 
     function handleCheckboxChange() {
         $('.checkbox').change(function() {
-            updateSelectedUnits($(this).val(), $(this).prop('checked'));
+            updateSelectedPositions($(this).val(), $(this).prop('checked'));
             if (!$(this).prop('checked')) {
                 $('#selectAll').prop('checked', false);
             }
@@ -328,23 +354,23 @@
         });
     }
 
-    function updateSelectedUnits(value, isChecked) {
+    function updateSelectedPositions(value, isChecked) {
         if (isChecked && value !== '') {
-            if (!currentSelectedUnits.includes(value)) {
-                currentSelectedUnits.push(value);
+            if (!currentSelectedPositions.includes(value)) {
+                currentSelectedPositions.push(value);
             }
         } else {
-            currentSelectedUnits = currentSelectedUnits.filter(item => item !== value);
+            currentSelectedPositions = currentSelectedPositions.filter(item => item !== value);
         }
     }
 
     function toggleUpdateButton() {
-        const addedUnits = currentSelectedUnits.filter(unit => !previousSelectedUnits.includes(unit));
-        const removedUnits = previousSelectedUnits.filter(unit => !currentSelectedUnits.includes(unit));
-        if (addedUnits.length > 0 || removedUnits.length > 0) {
-            $('#btnUpdateSelectedUnit').removeClass('d-none');
+        const addedPositions = currentSelectedPositions.filter(position => !previousSelectedPositions.includes(position));
+        const removedPositions = previousSelectedPositions.filter(position => !currentSelectedPositions.includes(position));
+        if (addedPositions.length > 0 || removedPositions.length > 0) {
+            $('#btnUpdateSelectedPosition').removeClass('d-none');
         } else {
-            $('#btnUpdateSelectedUnit').addClass('d-none');
+            $('#btnUpdateSelectedPosition').addClass('d-none');
         }
     }
 
@@ -363,8 +389,8 @@
             }, 500)();
         });
 
-        $('#btnUpdateSelectedUnit').click(function() {
-            updateSelectedUnitsData();
+        $('#btnUpdateSelectedPosition').click(function() {
+            updateSelectedPositionsData();
         });
 
         $('#btnSubmit').click(() => $('#formMapping').submit());
@@ -382,11 +408,11 @@
         });
     }
 
-    function updateSelectedUnitsData() {
-        confirmUpdateSelectedUnits();
+    function updateSelectedPositionsData() {
+        confirmUpdateSelectedPositions();
     }
 
-    function confirmUpdateSelectedUnits() {
+    function confirmUpdateSelectedPositions() {
         swal({
             title: 'Are you sure?',
             text: "You won't be able to revert this!",
@@ -406,35 +432,36 @@
                 }
             }
         }).then(willUpdate => {
-            if (willUpdate) doUpdateSelectedUnitsData();
+            if (willUpdate) doUpdateSelectedPositionsData();
         });
     }
 
-    async function doUpdateSelectedUnitsData() {
+    async function doUpdateSelectedPositionsData() {
         toggleBarLoader(null, true);
         try {
-            const addedUnits = currentSelectedUnits.filter(unit => !previousSelectedUnits.includes(unit));
-            const removedUnits = previousSelectedUnits.filter(unit => !currentSelectedUnits.includes(unit));
+            const addedPositions = currentSelectedPositions.filter(position => !previousSelectedPositions.includes(position));
+            const removedPositions = previousSelectedPositions.filter(position => !currentSelectedPositions.includes(position));
+            console.log(addedPositions, removedPositions);
             
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/update_selected_units`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/update_selected_positions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     group_id: $('#groupId').val(),
-                    added_units: JSON.stringify(addedUnits),
-                    removed_units: JSON.stringify(removedUnits)
+                    added_positions: JSON.stringify(addedPositions),
+                    removed_positions: JSON.stringify(removedPositions)
                 }).toString()
             });
             const result = await response.json();
             if (result.status === 'success') {
-                displayToast('Success', 'Selected units updated successfully', 'success');
+                displayToast('Success', 'Selected positions updated successfully', 'success');
                 
-                previousSelectedUnits = [...currentSelectedUnits];
+                previousSelectedPositions = [...currentSelectedPositions];
             } else {
-                displayToast('Error', 'Failed to update selected units', 'error');
+                displayToast('Error', 'Failed to update selected positions', 'error');
             }
         } catch (error) {
-            displayToast('Error', 'An error occurred while updating selected units', 'error');
+            displayToast('Error', 'An error occurred while updating selected positions', 'error');
         }
         toggleBarLoader(null, false);
     }
@@ -443,23 +470,23 @@
         let formData;
         let url;
         if (mode === 'modalAddGroup') {
-            url = 'mapping/kpi_unit_type/store_group';
+            url = 'mapping/kpi_position_type/store_group';
             formData = new URLSearchParams(new FormData($('#formGroup')[0]));
         } else if (mode === 'modalEditGroup') {
-            url = 'mapping/kpi_unit_type/update_group';
+            url = 'mapping/kpi_position_type/update_group';
             formData = new URLSearchParams(new FormData($('#formGroup')[0]));
         } else {
-            const selectedUnitType = $(`#unitType`).find('option:selected');
-            const selectedUnitTypeName = selectedUnitType.text();
+            const selectedPositionGroup = $(`#positionType`).find('option:selected');
+            const selectedPositionGroupName = selectedPositionGroup.text();
             const selectedYearPeriodId = $(`#yearPeriodId`).find('option:selected');
             const selectedYearPeriodName = selectedYearPeriodId.text();
             const selectedGroupId = $(`#groupId`).find('option:selected');
             const selectedGroupName = selectedGroupId.text();
             
-            url = 'mapping/kpi_unit_type/mapping_data';
+            url = 'mapping/kpi_position_type/mapping_data';
 
             formData = new URLSearchParams(new FormData($('#formMapping')[0]));
-            formData.append('unit_type_name', selectedUnitTypeName);
+            formData.append('position_type_name', selectedPositionGroupName);
             formData.append('year_period_name', selectedYearPeriodName);
             formData.append('group_name', selectedGroupName);
         }
@@ -499,7 +526,7 @@
             } else {
                 displayToast('Success', response.message + ', generate to KPI page...', 'success');
                 setTimeout(() => {
-                    window.location.href = `${config.siteUrl}mapping/kpi_unit_type/kpi?data=${response.data.encrypted_data}`;
+                    window.location.href = `${config.siteUrl}mapping/kpi_position_type/kpi?data=${response.data.encrypted_data}`;
                 }, 1000);
             }
         } else {

@@ -21,7 +21,6 @@
                 perspective_id: null,
                 objective_id: null,
                 kpi_id: null,
-                measurement: null,
                 weight: 0,
                 score: 0,
                 mode: ''
@@ -131,7 +130,6 @@
                 perspective_id: item.perspective_id,
                 objective_id: item.objective_id,
                 kpi_id: item.kpi_id,
-                measurement: item.measurement,
                 weight: item.weight,
                 score: item.score,
                 mode: null
@@ -218,14 +216,7 @@
                                 <div class="error-message text-small text-danger mt-1" id="error-kpi_id-${kpi.id}"></div>
                             </td>
                             <td>
-                                <select type="text" class="form-control select2-js-basic" style="width: 200px" id="measurement-${kpi.id}" name="measurement-${kpi.id}" disabled>
-                                    <option value="">- Choose -</option>
-                                    <option value="Juta Rupiah">Juta Rupiah</option>
-                                    <option value="Percentage %">Percentage %</option>
-                                    <option value="Bilangan">Bilangan</option>
-                                    <option value="Index">Index</option>
-                                </select>
-                                <div class="error-message text-small text-danger mt-1" id="error-measurement-${kpi.id}"></div>
+                                <span id="measurement-${kpi.id}">-</span>
                             </td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-danger" disabled>target</button>
@@ -283,11 +274,11 @@
     async function setupValueKpi(kpi) {
         if (kpi.mode !== 'add') {
             $(`[data-id="${kpi.id}"]`).attr('data-kpi-mode', '');
-            $(`#measurement-${kpi.id}`).val(kpi.measurement).trigger('change');
 
             if (kpi.kpi_id) {
                 const data = await getKpiById(kpi.kpi_id);
                 if (data) {
+                    $(`#measurement-${kpi.id}`).text(data.measurement);
                     $(`#counter-${kpi.id}`).text(data.counter);
                     $(`#polarization-${kpi.id}`).text(data.polarization);
                     
@@ -301,6 +292,7 @@
                 const id = $(this).val();
                 const data = await getKpiById(id);
                 if (data) {
+                    $(`#measurement-${kpi.id}`).text(data.measurement);
                     $(`#counter-${kpi.id}`).text(data.counter);
                     $(`#polarization-${kpi.id}`).text(data.polarization);
                 }
@@ -414,7 +406,6 @@
                 id: id,
                 kpi_id: selectedValue,
                 kpi_name: selectedName,
-                measurement: $(`#measurement-${id}`).val(),
                 weight: $(`#weight-${id}`).val(),
                 score: $(`#score-${id}`).text()
             }
@@ -431,7 +422,6 @@
             const objectiveId = $(this).attr('data-objective-id');
         
             const kpiId = $(`#kpiId-${id}`).val();
-            const measurement = $(`#measurement-${id}`).val();
             const weight = $(`#weight-${id}`).val();
             
             const data = {
@@ -443,7 +433,6 @@
                 perspective_id: perspectiveId,
                 objective_id: objectiveId,
                 kpi_id: kpiId,
-                measurement: measurement,
                 weight: weight,
             }
             toggleButtonLoader(this, true, { data: '' });
@@ -523,7 +512,6 @@
         $(`.btn-edit[data-id="${id}"]`).toggleClass('d-none', !isCancel);
         $(`.btn-delete[data-id="${id}"]`).toggleClass('d-none', !isCancel);
         $(`#kpiId-${id}`).prop('disabled', isCancel);
-        $(`#measurement-${id}`).prop('disabled', isCancel);
         $(`#weight-${id}`).prop('disabled', isCancel);
     }
 
@@ -533,7 +521,6 @@
             const dataBeforeEdit = dataKpiBeforeEdit[dataBeforeEditIndex];
             const newOption = new Option(dataBeforeEdit.kpi_name, dataBeforeEdit.kpi_id, true, true);
             $(`#kpiId-${id}`).append(newOption).trigger('change');
-            $(`#measurement-${id}`).val(dataBeforeEdit.measurement).trigger('change');
             $(`#weight-${id}`).val(dataBeforeEdit.weight);
             
             dataKpiBeforeEdit.splice(dataBeforeEditIndex, 1);
@@ -882,7 +869,6 @@
                 perspective_id: perspectiveId,
                 objective_id: objectiveId,
                 kpi_id: null,
-                measurement: null,
                 weight: 0,
                 score: 0,
                 mode: 'add'
@@ -928,7 +914,6 @@
                 objective.kpi_detail.forEach(kpi => {
                     if (kpi.id === id) {
                         kpi.kpi_id = data.kpi_id;
-                        kpi.measurement = data.measurement;
                         kpi.weight = parseFloat(data.weight);
                         kpi.mode = '';
                         updateKpi = kpi;

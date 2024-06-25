@@ -2,13 +2,13 @@
     <h3 class="page-title">
         <span class="page-title-icon bg-gradient-primary text-white me-2">
             <i class="mdi mdi-chart-bar"></i>
-        </span> KPI Unit Type
+        </span> KPI Position
     </h3>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="#">Mapping</a></li>
             <li class="breadcrumb-item"><a href="#">KPI</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Unit Type</li>
+            <li class="breadcrumb-item active" aria-current="page">Position</li>
         </ol>
     </nav>
 </div>
@@ -32,13 +32,13 @@
                         <div class="card-body">
                             <div class="row d-flex align-items-center">
                                 <div class="col-md-6 col-sm-6">
-                                    <input type="hidden" id="kpiUnitTypeYearPeriodId" value="<?= $year_period_id ?>">
-                                    <input type="hidden" id="kpiUnitTypeUnitType" value="<?= $unit_type ?>">
-                                    <input type="hidden" id="kpiUnitTypeGroupId" value="<?= $group_id ?>">
+                                    <input type="hidden" id="kpiPositionYearPeriodId" value="<?= $year_period_id ?>">
+                                    <input type="hidden" id="kpiPositionPosition" value="<?= $position_group ?>">
+                                    <input type="hidden" id="kpiPositionGroupId" value="<?= $group_id ?>">
                                     <div class="row">
                                         <div class="col-12 mb-2">
-                                            <label for="unitTypeName" class="form-label me-2">Unit Type Name</label>
-                                            <input type="text" class="form-control" id="unitTypeName" value="<?= $unit_type_name ?>" readonly>
+                                            <label for="positionGroupName" class="form-label me-2">Position</label>
+                                            <input type="text" class="form-control" id="positionGroupName" value="<?= $position_group_name ?>" readonly>
                                         </div>
                                         <div class="col-12 mb-2">
                                             <label for="yearPeriodName" class="form-label me-2">Year Period</label>
@@ -64,19 +64,22 @@
                                 </div>
                             </div>
                             <hr class="mt-5">
-                            <div class="row">
-                                <div class="col-md-12 text-end">
-                                    <button class="btn btn-gradient-primary btn-modal is-submit-kpi d-none" type="button" data-bs-toggle="modal" data-bs-target="#modalAddKpi" data-mode="modalAddKpi"> Add KPI </button>
+                            <div id="createKPI" class="row d-flex align-items-center d-none">
+                                <div class="form-group col-md-4 col-sm-6">
+                                    <label for="groupUnitTypeId" class="mb-3">Group Unit Type</label>
+                                    <select class="form-select select2-js-basic" id="groupUnitTypeId" name="group_unit_type_id">
+                                        <option value=""> - Choose - </option>
+                                    </select>
+                                    <div class="error-message text-small text-danger mt-1" id="error-group_unit_type_id"></div>
                                 </div>
+                                <div class="col-md-4 col-sm-12 mt-2 mt-md-0">
+                                    <button type="button" id="btnCreateKPI" class="btn btn-gradient-primary btn-md">Create KPI</button>
+                                </div>
+                            </div>
+                            <div class="row">
                                 <div class="modal fade" id="modalAddKpi" tabindex="-1" role="dialog" aria-labelledby="modalLabelAddKpi" aria-hidden="true">
                                     <div class="modal-dialog" role="document">
                                         <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="modalLabelAddKpi">Add KPI</h5>
-                                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
-                                            </div>
                                             <div class="modal-body">
                                                 <form id="formAddKpi">
                                                     <div class="form-group row">

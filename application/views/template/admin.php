@@ -225,7 +225,7 @@
                   <li class="nav-item"> <a id="menu-corporate-kpi" class="nav-link" href="<?= base_url('mapping/kpi_corporate') ?>"> KPI Corporate </a></li>
                   <li class="nav-item"> <a id="menu-directorate-kpi" class="nav-link" href="<?= base_url('mapping/kpi_directorate') ?>"> KPI Directorate </a></li>
                   <li class="nav-item"> <a id="menu-unit_type-kpi" class="nav-link" href="<?= base_url('mapping/kpi_unit_type') ?>"> KPI Unit Types </a></li>
-                  <li class="nav-item"> <a id="menu-position-kpi" class="nav-link" href="<?= base_url('mapping/kpi_position') ?>"> KPI Position </a></li>
+                  <li class="nav-item"> <a id="menu-position-kpi" class="nav-link" href="<?= base_url('mapping/kpi_position_type') ?>"> KPI Position </a></li>
                   <li class="nav-item"> <a id="menu-corporate-target" class="nav-link" href="<?= base_url('mapping/corporate_target') ?>"> Corporate Targets </a></li>
                 </ul>
               </div>

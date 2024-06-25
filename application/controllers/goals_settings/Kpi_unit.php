@@ -113,7 +113,6 @@ class Kpi_unit extends CI_Controller {
 
     private function validate_input_store_update_kpi() {
         $this->form_validation->set_rules('kpi_id', 'KPI', 'required|trim');
-        $this->form_validation->set_rules('measurement', 'Measurement', 'required|trim');
         $this->form_validation->set_rules('weight', 'Weight', 'required|trim');
         return $this->form_validation->run();
     }
@@ -126,7 +125,6 @@ class Kpi_unit extends CI_Controller {
     private function collect_form_errors_store_update_kpi() {
         return [
             'kpi_id' => form_error('kpi_id'),
-            'measurement' => form_error('measurement'),
             'weight' => form_error('weight')
         ];
     }
@@ -137,7 +135,6 @@ class Kpi_unit extends CI_Controller {
             'year_period_id' => $this->input->post('year_period_id'),
             'unit_id' => $this->input->post('unit_id'),
             'kpi_id' => $this->input->post('kpi_id'),
-            'measurement' => $this->input->post('measurement'),
             'weight' => $this->input->post('weight'),
             'perspective_id' => $this->input->post('perspective_id'),
             'objective_id' => $this->input->post('objective_id'),

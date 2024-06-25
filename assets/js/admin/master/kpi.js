@@ -28,6 +28,7 @@
             columns: [
                 { data: "no", className: "text-center", orderable: false, searchable: false },
                 { data: "kpi", className: "text-left" },
+                { data: "measurement", className: "text-left" },
                 { data: "counter", className: "text-left" },
                 { data: "polarization", className: "text-left" },
                 { data: "description", className: "text-left" },
@@ -195,6 +196,7 @@
             const data = result.data;
             $('#id').val(data.id);
             $('#kpi').val(data.kpi);
+            $('#measurement').val(data.measurement).trigger('change');
             $('#description').val(data.description);
             const newOptionYearPeriod = new Option(data.year_period, data.year_period_id, true, true);
             $('#yearPeriodId').append(newOptionYearPeriod).trigger('change');

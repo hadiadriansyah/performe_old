@@ -42,6 +42,7 @@ class Unit_model extends CI_Model {
         $this->db->select("{$this->table}.*")
                 ->from($this->table)
                 ->join('md_jenis_unit_kerja', "md_jenis_unit_kerja.id = {$this->table}.id_jenis_unit_kerja")
+                ->where_not_in("{$this->table}.id", '772')
                 ->where("md_jenis_unit_kerja.status", 1)
                 ->where("md_jenis_unit_kerja.kode_surat", $unit_type);
         return $this->db->get()->result();
