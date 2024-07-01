@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/master/Perspective_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Perspective_repository implements Perspective_repository_interface {
     protected $model;
     protected $year_period_model;
@@ -61,7 +62,7 @@ class Perspective_repository implements Perspective_repository_interface {
 
     #####
 
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 }

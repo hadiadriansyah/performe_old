@@ -51,10 +51,43 @@
     }
 
     function setupPercentage() {
-        $('#percentageInput').on('input', function() {
+        $('#percentageInput').on('input', async function() {
             const percentage = $(this).val();
-            $('.btn-submit-kpi').prop('disabled', percentage < 100);
+            if (percentage < 100) {
+                $('.btn-submit-kpi').prop('disabled', true);
+            } else {
+                const kpiUnitTarget = await getKpiUnitTargetByUnitIdYearPeriodId();
+                let totalKpiDetailCount = 0;
+                dataKpi.forEach(perspective => {
+                    perspective.objective_detail.forEach(objective => {
+                        totalKpiDetailCount += objective.kpi_detail.length;
+                    });
+                });
+                console.log(kpiUnitTarget.length, totalKpiDetailCount);
+                if (kpiUnitTarget.length === totalKpiDetailCount) {
+                    $('.btn-submit-kpi').prop('disabled', false);
+                } else {
+                    $('.btn-submit-kpi').prop('disabled', true);
+                }
+            }
         });
+    }
+
+    async function getKpiUnitTargetByUnitIdYearPeriodId() {
+        try {
+            const response = await fetch(`${config.siteUrl}goals_settings/kpi_unit/get_kpi_unit_target_by_unit_id`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    unit_id: kpiUnitUnitId,
+                    year_period_id: kpiUnitYearPeriodId,
+                }).toString()
+            });
+            const result = await response.json();
+            return result.data;
+        } catch (error) {
+            return false
+        }
     }
 
     function updatePercentage(percentage = 0) {
@@ -351,12 +384,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -376,12 +415,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -401,12 +446,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -462,7 +513,7 @@
                 calculateAndDisplayPercentageAndTotalWeight();
             }
             toggleButtonLoader(this, false, { data: '<i class="mdi mdi-check"></i>' });
-        }, 30));
+        }, 300));
 
         $(document).on('click', '.btn-cancel', function() {
             const id = $(this).attr('data-id');

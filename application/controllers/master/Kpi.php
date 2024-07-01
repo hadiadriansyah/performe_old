@@ -212,10 +212,10 @@ class Kpi extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
-        echo json_encode($data);
+        $this->json_response->success('Data successfully fetched.', $data);
     }
 
     public function get_kpi_counter_options_by_year_period_id() {
@@ -224,10 +224,10 @@ class Kpi extends CI_Controller {
         $yearPeriodId = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_counter_options_by_year_period_id($search, $page, $yearPeriodId);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->counter], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->counter], $result['data']),
             'total_count' => $result['total']
         ];
-        echo json_encode($data);
+        $this->json_response->success('Data successfully fetched.', $data);
     }
 
     public function get_kpi_polarization_options_by_year_period_id() {
@@ -236,9 +236,9 @@ class Kpi extends CI_Controller {
         $yearPeriodId = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_polarization_options_by_year_period_id($search, $page, $yearPeriodId);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->polarization], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->polarization], $result['data']),
             'total_count' => $result['total']
         ];
-        echo json_encode($data);
+        $this->json_response->success('Data successfully fetched.', $data);
     }
 }

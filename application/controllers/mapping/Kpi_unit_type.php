@@ -58,7 +58,7 @@ class Kpi_unit_type extends CI_Controller {
     private function validate_input_mapping_data() {
         $this->form_validation->set_rules('year_period_id', 'Year Period', 'required|trim');
         $this->form_validation->set_rules('unit_type', 'Unit Type', 'required|trim');
-        $this->form_validation->set_rules('group_id', 'Group', 'required|trim');
+        $this->form_validation->set_rules('group_unit_type_id', 'Group', 'required|trim');
         $this->form_validation->set_error_delimiters('', '');
         return $this->form_validation->run();
     }
@@ -72,7 +72,7 @@ class Kpi_unit_type extends CI_Controller {
         return [
             'year_period_id' => form_error('year_period_id'),
             'unit_type' => form_error('unit_type'),
-            'group_id' => form_error('group_id'),
+            'group_unit_type_id' => form_error('group_unit_type_id'),
         ];
     }
 
@@ -82,7 +82,7 @@ class Kpi_unit_type extends CI_Controller {
             'unit_type_name' => $this->input->post('unit_type_name'),
             'year_period_id' => $this->input->post('year_period_id'),
             'year_period_name' => $this->input->post('year_period_name'),
-            'group_id' => $this->input->post('group_id'),
+            'group_unit_type_id' => $this->input->post('group_unit_type_id'),
             'group_name' => $this->input->post('group_name'),
         ];
 
@@ -108,8 +108,27 @@ class Kpi_unit_type extends CI_Controller {
 
         $data = $this->collect_input_store_update_kpi();
         if ($mode == 'add') {
+            $exists = $this->repository->exists($data);
+            
+            if ($exists['is_exists']) {
+                $this->json_response->error(
+                    'Data for the ' . $exists['data']->kpi . 
+                    ' KPI is already in use.'
+                );
+                return;
+            }
             $this->save_kpi($data);
         } else {
+            $exists = $this->repository->exists($data);
+            $unique = $this->repository->unique($data);
+            
+            if ($exists['is_exists'] && $unique['is_unique']) {
+                $this->json_response->error(
+                    'Data for the ' . $exists['data']->kpi . 
+                    ' KPI is already in use.'
+                );
+                return;
+            }
             $this->update_kpi($data);
         }
     }
@@ -137,7 +156,7 @@ class Kpi_unit_type extends CI_Controller {
             'id' => $this->input->post('id'),
             'year_period_id' => $this->input->post('year_period_id'),
             'unit_type' => $this->input->post('unit_type'),
-            'group_id' => $this->input->post('group_id'),
+            'group_unit_type_id' => $this->input->post('group_unit_type_id'),
             'kpi_id' => $this->input->post('kpi_id'),
             'weight' => $this->input->post('weight'),
             'perspective_id' => $this->input->post('perspective_id'),
@@ -264,7 +283,7 @@ class Kpi_unit_type extends CI_Controller {
     }
 
     public function update_selected_units() {
-        $group_id = $this->input->post('group_id');
+        $group_unit_type_id = $this->input->post('group_unit_type_id');
         $added_units = json_decode($this->input->post('added_units'), true);
         $removed_units = json_decode($this->input->post('removed_units'), true);
     
@@ -272,13 +291,13 @@ class Kpi_unit_type extends CI_Controller {
     
         try {
             if (!empty($removed_units)) {
-                $this->repository->delete_units($group_id, $removed_units);
+                $this->repository->delete_units($group_unit_type_id, $removed_units);
             }
     
             if (!empty($added_units)) {
-                $unitsToInsert = array_map(function($unit_id) use ($group_id) {
+                $unitsToInsert = array_map(function($unit_id) use ($group_unit_type_id) {
                     return [
-                        'group_id' => $group_id,
+                        'group_unit_type_id' => $group_unit_type_id,
                         'unit_id' => $unit_id
                     ];
                 }, $added_units);
@@ -319,10 +338,10 @@ class Kpi_unit_type extends CI_Controller {
         $input_data = [
             'unit_type' => $this->input->post('unit_type'),
             'year_period_id' => $this->input->post('year_period_id'),
-            'group_id' => $this->input->post('group_id'),
+            'group_unit_type_id' => $this->input->post('group_unit_type_id'),
             'is_submit' => $this->input->post('is_submit'),
         ];
-        if (!isset($input_data['unit_type']) || !isset($input_data['year_period_id']) || !isset($input_data['group_id'])) {
+        if (!isset($input_data['unit_type']) || !isset($input_data['year_period_id']) || !isset($input_data['group_unit_type_id'])) {
             $this->json_response->error('Unit or Year Period or Group is required.');
             return;
         }
@@ -350,7 +369,7 @@ class Kpi_unit_type extends CI_Controller {
         $data = $this->input->post();
 
         // $units = $this->repository->get_unit_by_unit_type($data['unit_type']);
-        $units = $this->repository->get_units_by_group_id($data['group_id']);
+        $units = $this->repository->get_units_by_group_unit_type($data);
         $kpis = $this->repository->get_kpi_unit_type($data);
 
         $result = [
@@ -406,7 +425,7 @@ class Kpi_unit_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -436,8 +455,8 @@ class Kpi_unit_type extends CI_Controller {
         $this->json_response->{$data ? 'success' : 'error'}($message, $data);
     }
 
-    public function get_units_by_group_id($id) {
-        $data = $this->repository->get_units_by_group_id($id);
+    public function get_units_by_group_unit_type_id($id) {
+        $data = $this->repository->get_units_by_group_unit_type_id($id);
         $this->json_response->success('Data successfully fetched.', $data);
     }
 
@@ -446,7 +465,7 @@ class Kpi_unit_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_kpi_unit_type_groups_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -457,7 +476,7 @@ class Kpi_unit_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -470,7 +489,7 @@ class Kpi_unit_type extends CI_Controller {
 
         $result = $this->repository->get_unit_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -482,7 +501,7 @@ class Kpi_unit_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_perspective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -494,7 +513,7 @@ class Kpi_unit_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_objective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);

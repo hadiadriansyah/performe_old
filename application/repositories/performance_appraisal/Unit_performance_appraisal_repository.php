@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/performance_appraisal/Unit_performance_appraisal_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Unit_performance_appraisal_repository implements Unit_performance_appraisal_repository_interface {
     protected $model;
     protected $year_period_model;
@@ -72,23 +73,23 @@ class Unit_performance_appraisal_repository implements Unit_performance_appraisa
         return $this->kpi_unit_actual_model->get_by_kpi_unit_id($id);
     }
 
-    public function get_index_scores($year_period_id = '') {
+    public function get_index_scores($year_period_id) {
         return $this->index_score_model->get_by_year_period_id($year_period_id);
     }
 
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 
-    public function get_unit_options($search = '', $page = 1) {
+    public function get_unit_options($search, $page) {
         return $this->unit_model->get_options($search, $page);
     }
 
-    public function get_perspective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_perspective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->perspective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 
-    public function get_objective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_objective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->objective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 }

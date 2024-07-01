@@ -17,6 +17,48 @@ class Kpi_unit_model extends CI_Model {
         return $this->db->get()->result();
     }
 
+    public function get_kpi_unit_target_by_unit_id($data) {
+        $this->db->select($this->table . '.*');
+        $this->db->from($this->table);
+        $this->db->join('npm_kpi_unit_target', 'npm_kpi_unit_target.kpi_unit_id = ' . $this->table . '.id', 'inner');
+        $this->db->where($this->table . '.unit_id', $data['unit_id']);
+        $this->db->where($this->table . '.year_period_id', $data['year_period_id']);
+        return $this->db->get()->result();
+    }
+
+    #####
+
+    public function exists(array $data) {
+        $this->db->select("{$this->table}.*, npm_kpis.kpi, npm_year_periods.year_period")
+                    ->from($this->table)
+                    ->join('npm_year_periods', "{$this->table}.year_period_id = npm_year_periods.id", 'left')
+                    ->join('npm_kpis', 'npm_kpis.id = ' . $this->table . '.kpi_id', 'left')
+                    ->where("{$this->table}.kpi_id", $data['kpi_id'])
+                    ->where("{$this->table}.unit_id", $data['unit_id'])
+                    ->where("{$this->table}.year_period_id", $data['year_period_id']);
+        $result = $this->db->get();
+        return [
+            'is_exists' => $result->num_rows() > 0,
+            'data' => $result->row()
+        ];
+    }
+
+    public function unique(array $data) {
+        $this->db->select("{$this->table}.*, npm_kpis.kpi, npm_year_periods.year_period")
+                    ->from($this->table)
+                    ->join('npm_year_periods', "{$this->table}.year_period_id = npm_year_periods.id", 'left')
+                    ->join('npm_kpis', 'npm_kpis.id = ' . $this->table . '.kpi_id', 'left')
+                    ->where("{$this->table}.id !=", $data['id'])
+                    ->where("{$this->table}.kpi_id", $data['kpi_id'])
+                    ->where("{$this->table}.unit_id", $data['unit_id'])
+                    ->where("{$this->table}.year_period_id", $data['year_period_id']);
+        $result = $this->db->get();
+        return [
+            'is_unique' => $result->num_rows() > 0,
+            'data' => $result->row()
+        ];
+    }
+
     public function store($data) {
         $query = $this->db->query("INSERT INTO {$this->table} (".implode(", ", array_keys($data)).") VALUES (".implode(", ", array_map(array($this->db, 'escape'), array_values($data))).") RETURNING *");
         return $query->row_array();

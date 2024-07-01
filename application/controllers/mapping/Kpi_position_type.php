@@ -31,7 +31,7 @@ class Kpi_position_type extends CI_Controller {
         $data = $this->input->get('data');
         $decryptedData = $this->decryptData($data, $this->secretPass);
         if (!$decryptedData) {
-            redirect('mapping/kpi_position_type');
+            redirect('goals_settings/position_kpi/index');
         }
         $data = array_merge($this->bc->get_global(), json_decode($decryptedData, true), [
             'title' => 'KPI Position Types',
@@ -58,7 +58,7 @@ class Kpi_position_type extends CI_Controller {
     private function validate_input_mapping_data() {
         $this->form_validation->set_rules('year_period_id', 'Year Period', 'required|trim');
         $this->form_validation->set_rules('position_type', 'Position Type', 'required|trim');
-        $this->form_validation->set_rules('group_id', 'Group', 'required|trim');
+        $this->form_validation->set_rules('group_position_type_id', 'Group', 'required|trim');
         $this->form_validation->set_error_delimiters('', '');
         return $this->form_validation->run();
     }
@@ -72,7 +72,7 @@ class Kpi_position_type extends CI_Controller {
         return [
             'year_period_id' => form_error('year_period_id'),
             'position_type' => form_error('position_type'),
-            'group_id' => form_error('group_id'),
+            'group_position_type_id' => form_error('group_position_type_id'),
         ];
     }
 
@@ -82,7 +82,7 @@ class Kpi_position_type extends CI_Controller {
             'position_type_name' => $this->input->post('position_type_name'),
             'year_period_id' => $this->input->post('year_period_id'),
             'year_period_name' => $this->input->post('year_period_name'),
-            'group_id' => $this->input->post('group_id'),
+            'group_position_type_id' => $this->input->post('group_position_type_id'),
             'group_name' => $this->input->post('group_name'),
         ];
 
@@ -99,45 +99,38 @@ class Kpi_position_type extends CI_Controller {
 
     // Store Update KPI
 
-    public function store_update_kpi() {
-        $mode = $this->input->post('mode');
-        if (!$this->validate_input_store_update_kpi()) {
-            $this->handle_validation_error_store_update_kpi();
+    public function update_kpi_position_type() {
+        if (!$this->validate_input_kpi_position_type()) {
+            $this->handle_validation_error_kpi_position_type();
             return;
         }
 
-        $data = $this->collect_input_store_update_kpi();
-        if ($mode == 'add') {
-            $this->save_kpi($data);
-        } else {
-            $this->update_kpi($data);
-        }
+        $data = $this->collect_input_kpi_position_type();
+        $this->update_kpi($data);
     }
 
-    private function validate_input_store_update_kpi() {
-        $this->form_validation->set_rules('kpi_id', 'KPI', 'required|trim');
+    private function validate_input_kpi_position_type() {
         $this->form_validation->set_rules('weight', 'Weight', 'required|trim');
         return $this->form_validation->run();
     }
 
-    private function handle_validation_error_store_update_kpi() {
-        $errors = $this->collect_form_errors_store_update_kpi();
+    private function handle_validation_error_kpi_position_type() {
+        $errors = $this->collect_form_errors_kpi_position_type();
         $this->json_response->error('Failed to collect data.', $errors);
     }
 
-    private function collect_form_errors_store_update_kpi() {
+    private function collect_form_errors_kpi_position_type() {
         return [
-            'kpi_id' => form_error('kpi_id'),
             'weight' => form_error('weight')
         ];
     }
 
-    private function collect_input_store_update_kpi() {
+    private function collect_input_kpi_position_type() {
         $input_data = [
             'id' => $this->input->post('id'),
             'year_period_id' => $this->input->post('year_period_id'),
             'position_type' => $this->input->post('position_type'),
-            'group_id' => $this->input->post('group_id'),
+            'group_position_type_id' => $this->input->post('group_position_type_id'),
             'kpi_id' => $this->input->post('kpi_id'),
             'weight' => $this->input->post('weight'),
             'perspective_id' => $this->input->post('perspective_id'),
@@ -264,7 +257,7 @@ class Kpi_position_type extends CI_Controller {
     }
 
     public function update_selected_positions() {
-        $group_id = $this->input->post('group_id');
+        $group_position_type_id = $this->input->post('group_position_type_id');
         $added_positions = json_decode($this->input->post('added_positions'), true);
         $removed_positions = json_decode($this->input->post('removed_positions'), true);
     
@@ -272,13 +265,13 @@ class Kpi_position_type extends CI_Controller {
     
         try {
             if (!empty($removed_positions)) {
-                $this->repository->delete_positions($group_id, $removed_positions);
+                $this->repository->delete_positions($group_position_type_id, $removed_positions);
             }
     
             if (!empty($added_positions)) {
-                $positionsToInsert = array_map(function($position_id) use ($group_id) {
+                $positionsToInsert = array_map(function($position_id) use ($group_position_type_id) {
                     return [
-                        'group_id' => $group_id,
+                        'group_position_type_id' => $group_position_type_id,
                         'position_id' => $position_id
                     ];
                 }, $added_positions);
@@ -319,11 +312,11 @@ class Kpi_position_type extends CI_Controller {
         $input_data = [
             'position_type' => $this->input->post('position_type'),
             'year_period_id' => $this->input->post('year_period_id'),
-            'group_id' => $this->input->post('group_id'),
+            'group_position_type_id' => $this->input->post('group_position_type_id'),
             'is_submit' => $this->input->post('is_submit'),
         ];
-        if (!isset($input_data['position_type']) || !isset($input_data['year_period_id']) || !isset($input_data['group_id'])) {
-            $this->json_response->error('Position or Year Period or Group is required.');
+        if (!isset($input_data['position_type']) || !isset($input_data['year_period_id']) || !isset($input_data['group_position_type_id'])) {
+            $this->json_response->error('Unit or Year Period or Group is required.');
             return;
         }
     
@@ -359,13 +352,15 @@ class Kpi_position_type extends CI_Controller {
                         'perspective_id' => $item->perspective_id,
                         'objective_id' => $item->objective_id,
                         'kpi_id' => $item->kpi_id,
-                        'weight' => $item->weight,
+                        'weight' => 0,
                         'score' => $item->score,
                         'description' => $item->description,
                         'is_submit' => 0,
                         'created_by' => $this->bc->get_global()['vendor_id'],
                         'updated_by' => $this->bc->get_global()['vendor_id'],
-                        'group_id' => $data['group_position_type_id']
+                        'group_position_type_id' => $data['group_position_type_id'],
+                        'group_unit_type_id' => $data['group_unit_type_id'],
+                        'kpi_unit_type_id' => $item->id
                     ];
                     $this->repository->store($store);
                 }
@@ -385,33 +380,36 @@ class Kpi_position_type extends CI_Controller {
         }
     }
 
-    public function generate_kpi() {
-        $data = $this->input->post();
-
-        $positions = $this->repository->get_positions_by_group_id($data['group_id']);
-        $kpis = $this->repository->get_kpi_position_type($data);
-
-        $result = [
-            'positions' => $positions ?? [],
-            'kpis' => $kpis ?? []
+    public function insert_kpi_position_type() {
+        $input_data = $this->input->post();
+        $store = [
+            'id' => $input_data['id'],
+            'position_type' => $input_data['position_type'],
+            'year_period_id' => $input_data['year_period_id'],
+            'perspective_id' => $input_data['perspective_id'],
+            'objective_id' => $input_data['objective_id'],
+            'kpi_id' => $input_data['kpi_id'],
+            'weight' => 0,
+            'is_submit' => 0,
+            'created_by' => $this->bc->get_global()['vendor_id'],
+            'updated_by' => $this->bc->get_global()['vendor_id'],
+            'group_position_type_id' => $input_data['group_position_type_id'],
+            'group_unit_type_id' => $input_data['group_unit_type_id'],
+            'kpi_unit_type_id' => $input_data['kpi_unit_type_id']
         ];
-
-        $message = $result ? 'Data successfully fetched.' : 'Failed to fetch data.';
-        $this->json_response->{$result ? 'success' : 'error'}($message, $result);
+        $store = $this->repository->store($store);
+        $message = $store ? 'KPI successfully added.' : 'Failed to add KPI.';
+        
+        $this->json_response->{$store ? 'success' : 'error'}($message, $store);
     }
 
-    public function generate_kpi_row() {
+    public function delete_kpi_position_type() {
         $data = $this->input->post();
-
-        $result = $this->repository->generate_kpi_row($data);
-
-        if ($result['status']) {
-            $this->json_response->success($result['message'], $result);
-        } else {
-            $this->json_response->error($result['message'], $result);
-        }
+        $delete = $this->repository->delete_by_data($data);
+        $message = $delete ? 'KPI successfully deleted.' : 'Failed to delete KPI.';
+        $this->json_response->{$delete ? 'success' : 'error'}($message, $delete);
     }
-
+    
     #####
 
     public function get_position_by_position_type() {
@@ -423,6 +421,12 @@ class Kpi_position_type extends CI_Controller {
     public function get_kpi_position_type() {
         $data = $this->input->post();
         $kpi = $this->repository->get_kpi_position_type($data);
+        $this->json_response->success('Data successfully fetched.', $kpi);
+    }
+
+    public function get_kpi_unit_type_by_group_unit_type_id() {
+        $data = $this->input->post();
+        $kpi = $this->repository->get_kpi_unit_type_by_group_unit_type_id($data);
         $this->json_response->success('Data successfully fetched.', $kpi);
     }
 
@@ -444,7 +448,7 @@ class Kpi_position_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -474,8 +478,8 @@ class Kpi_position_type extends CI_Controller {
         $this->json_response->{$data ? 'success' : 'error'}($message, $data);
     }
 
-    public function get_positions_by_group_id($id) {
-        $data = $this->repository->get_positions_by_group_id($id);
+    public function get_positions_by_group_position_type_id($id) {
+        $data = $this->repository->get_positions_by_group_position_type_id($id);
         $this->json_response->success('Data successfully fetched.', $data);
     }
 
@@ -484,7 +488,7 @@ class Kpi_position_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_kpi_position_type_groups_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -495,7 +499,7 @@ class Kpi_position_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_kpi_unit_type_groups_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->group_type], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -506,7 +510,7 @@ class Kpi_position_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -517,19 +521,20 @@ class Kpi_position_type extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_position_type_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->orchart_label, 'text' => $item->orchart_label], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->orchart_label, 'text' => $item->orchart_label], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
     }
 
-
     public function get_position_options() {
+        $data = $this->bc->get_global();
         $search = $this->input->get('q');
         $page = $this->input->get('page');
+
         $result = $this->repository->get_position_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_position_kerja], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_position_kerja], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -541,7 +546,7 @@ class Kpi_position_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_perspective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -553,7 +558,7 @@ class Kpi_position_type extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_objective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);

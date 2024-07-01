@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/mapping/Kpi_unit_type_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Kpi_unit_type_repository implements Kpi_unit_type_repository_interface {
     protected $model;
     protected $kpi_unit_type_group_model;
@@ -37,6 +38,14 @@ class Kpi_unit_type_repository implements Kpi_unit_type_repository_interface {
 
     #####
 
+    public function exists(array $data) {
+        return $this->model->exists($data);
+    }
+
+    public function unique(array $data) {
+        return $this->model->unique($data);
+    }
+
     public function exists_group(array $data) {
         return $this->kpi_unit_type_group_model->exists($data);
     }
@@ -68,8 +77,8 @@ class Kpi_unit_type_repository implements Kpi_unit_type_repository_interface {
         return $this->unit_kpi_unit_type_group_model->store_units($units);
     }
 
-    public function delete_units($group_id, $unit_ids) {
-        return $this->unit_kpi_unit_type_group_model->delete_units($group_id, $unit_ids);
+    public function delete_units($group_unit_type_id, $unit_ids) {
+        return $this->unit_kpi_unit_type_group_model->delete_units($group_unit_type_id, $unit_ids);
     }
 
     public function delete_group($id) {
@@ -94,8 +103,12 @@ class Kpi_unit_type_repository implements Kpi_unit_type_repository_interface {
         return $this->unit_model->get_by_unit_type($unit_type);
     }
 
-    public function get_units_by_group_id($id) {
-        return $this->unit_kpi_unit_type_group_model->get_units_by_group_id($id);
+    public function get_units_by_group_unit_type($data) {
+        return $this->unit_kpi_unit_type_group_model->get_units_by_group_unit_type($data);
+    }
+    
+    public function get_units_by_group_unit_type_id($id) {
+        return $this->unit_kpi_unit_type_group_model->get_units_by_group_unit_type_id($id);
     }
 
     public function get_kpi_unit_type($data) {
@@ -115,24 +128,23 @@ class Kpi_unit_type_repository implements Kpi_unit_type_repository_interface {
         return $this->kpi_unit_type_group_model->get_by_id($id);
     }
 
-    public function get_kpi_unit_type_groups_options($search = '', $page = 1) {
+    public function get_kpi_unit_type_groups_options($search, $page) {
         return $this->kpi_unit_type_group_model->get_options($search, $page);
     }
 
-
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 
-    public function get_unit_options($search = '', $page = 1) {
+    public function get_unit_options($search, $page) {
         return $this->unit_model->get_options($search, $page);
     }
 
-    public function get_perspective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_perspective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->perspective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 
-    public function get_objective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_objective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->objective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 }

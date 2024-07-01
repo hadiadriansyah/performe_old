@@ -6,6 +6,7 @@
  * @version : 1.1
  * @since : 23 Mei 2024
  */
+#[\AllowDynamicProperties]
 class Base_controller {
 	protected $CI;
 	protected $global = [];

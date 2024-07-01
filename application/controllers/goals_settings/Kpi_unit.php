@@ -24,7 +24,7 @@ class Kpi_unit extends CI_Controller {
                 'admin/goals_settings/unit.js',
             ],
         ]);
-        $this->template->load('admin', 'admin/goals_settings/unit/index', $data);
+        $this->template->load('admin', 'admin/goals_settings/kpi_unit/index', $data);
     }
 
     public function kpi() {
@@ -39,7 +39,7 @@ class Kpi_unit extends CI_Controller {
                 'admin/goals_settings/kpi_unit.js'
             ],
         ]);
-        $this->template->load('admin', 'admin/goals_settings/unit/kpi', $data);
+        $this->template->load('admin', 'admin/goals_settings/kpi_unit/kpi', $data);
     }
 
 
@@ -105,8 +105,27 @@ class Kpi_unit extends CI_Controller {
 
         $data = $this->collect_input_store_update_kpi();
         if ($mode == 'add') {
+            $exists = $this->repository->exists($data);
+            
+            if ($exists['is_exists']) {
+                $this->json_response->error(
+                    'Data for the ' . $exists['data']->kpi . 
+                    ' KPI is already in use.'
+                );
+                return;
+            }
             $this->save_kpi($data);
         } else {
+            $exists = $this->repository->exists($data);
+            $unique = $this->repository->unique($data);
+            
+            if ($exists['is_exists'] && $unique['is_unique']) {
+                $this->json_response->error(
+                    'Data for the ' . $exists['data']->kpi . 
+                    ' KPI is already in use.'
+                );
+                return;
+            }
             $this->update_kpi($data);
         }
     }
@@ -290,6 +309,12 @@ class Kpi_unit extends CI_Controller {
         $this->json_response->success('Data successfully fetched.', $kpi);
     }
 
+    public function get_kpi_unit_target_by_unit_id() {
+        $data = $this->input->post();
+        $kpi = $this->repository->get_kpi_unit_target_by_unit_id($data);
+        $this->json_response->success('Data successfully fetched.', $kpi);
+    }
+
     public function get_kpi_by_id($id = '') {
         if (!$id) {
             $this->json_response->error('ID is required.');
@@ -308,7 +333,7 @@ class Kpi_unit extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -331,7 +356,7 @@ class Kpi_unit extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -348,7 +373,7 @@ class Kpi_unit extends CI_Controller {
         }
         $result = $unit;
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -360,7 +385,7 @@ class Kpi_unit extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_perspective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -372,7 +397,7 @@ class Kpi_unit extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_objective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);

@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/Login_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Login_repository implements Login_repository_interface {
     protected $model;
     protected $last_login_model;

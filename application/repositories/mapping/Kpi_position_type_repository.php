@@ -3,9 +3,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/mapping/Kpi_position_type_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Kpi_position_type_repository implements Kpi_position_type_repository_interface {
     protected $model;
+    protected $kpi_unit_type_model;
     protected $kpi_position_type_group_model;
+    protected $kpi_unit_type_group_model;
+    protected $position_kpi_position_type_group_model;
     protected $year_period_model;
     protected $md_jabatan_model;
     protected $kpi_model;
@@ -69,8 +73,8 @@ class Kpi_position_type_repository implements Kpi_position_type_repository_inter
         return $this->position_kpi_position_type_group_model->store_positions($positions);
     }
 
-    public function delete_positions($group_id, $position_ids) {
-        return $this->position_kpi_position_type_group_model->delete_positions($group_id, $position_ids);
+    public function delete_positions($group_position_type_id, $position_ids) {
+        return $this->position_kpi_position_type_group_model->delete_positions($group_position_type_id, $position_ids);
     }
 
     public function delete_group($id) {
@@ -85,6 +89,10 @@ class Kpi_position_type_repository implements Kpi_position_type_repository_inter
         return $this->model->delete($id);
     }
 
+    public function delete_by_data($data) {
+        return $this->model->delete_by_data($data);
+    }
+
     public function generate_kpi_row($data) {
         return $this->model->generate_kpi_row($data);
     }
@@ -95,8 +103,8 @@ class Kpi_position_type_repository implements Kpi_position_type_repository_inter
         return $this->md_jabatan_model->get_by_position_type($position_type);
     }
 
-    public function get_positions_by_group_id($id) {
-        return $this->position_kpi_position_type_group_model->get_positions_by_group_id($id);
+    public function get_positions_by_group_position_type_id($id) {
+        return $this->position_kpi_position_type_group_model->get_positions_by_group_position_type_id($id);
     }
 
     public function get_kpi_position_type($data) {
@@ -120,31 +128,31 @@ class Kpi_position_type_repository implements Kpi_position_type_repository_inter
         return $this->kpi_position_type_group_model->get_by_id($id);
     }
 
-    public function get_kpi_position_type_groups_options($search = '', $page = 1) {
+    public function get_kpi_position_type_groups_options($search, $page) {
         return $this->kpi_position_type_group_model->get_options($search, $page);
     }
-
-    public function get_kpi_unit_type_groups_options($search = '', $page = 1) {
+    
+    public function get_kpi_unit_type_groups_options($search, $page) {
         return $this->kpi_unit_type_group_model->get_options($search, $page);
     }
 
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 
-    public function get_position_type_options($search = '', $page = 1) {
+    public function get_position_type_options($search, $page) {
         return $this->md_jabatan_model->get_position_type_options($search, $page);
     }
 
-    public function get_position_options($search = '', $page = 1) {
+    public function get_position_options($search, $page) {
         return $this->md_jabatan_model->get_options($search, $page);
     }
 
-    public function get_perspective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_perspective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->perspective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 
-    public function get_objective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_objective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->objective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 }

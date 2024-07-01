@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/master/Year_period_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Year_period_repository implements Year_period_repository_interface {
     protected $model;
 

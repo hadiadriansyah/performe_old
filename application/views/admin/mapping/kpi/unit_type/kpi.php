@@ -34,7 +34,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <input type="hidden" id="kpiUnitTypeYearPeriodId" value="<?= $year_period_id ?>">
                                     <input type="hidden" id="kpiUnitTypeUnitType" value="<?= $unit_type ?>">
-                                    <input type="hidden" id="kpiUnitTypeGroupId" value="<?= $group_id ?>">
+                                    <input type="hidden" id="kpiUnitTypeGroupUnitTypeId" value="<?= $group_unit_type_id ?>">
                                     <div class="row">
                                         <div class="col-12 mb-2">
                                             <label for="unitTypeName" class="form-label me-2">Unit Type Name</label>

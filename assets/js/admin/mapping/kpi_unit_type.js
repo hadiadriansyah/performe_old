@@ -5,7 +5,7 @@
     let isSubmitting = false;
     const kpiUnitTypeYearPeriodId = getkpiUnitTypeYearPeriodIdVal();
     const kpiUnitTypeUnitType = getKpiUnitTypeUnitTypeVal();
-    const kpiUnitTypeGroupId = getKpiUnitTypeGroupIdVal();
+    const kpiUnitTypeGroupUnitTypeId = getKpiUnitTypeGroupUnitTypeIdVal();
     let dataKpi = [];
     let dataKpiBeforeEdit = []
     const newItemKPI = {
@@ -49,8 +49,8 @@
         return $('#kpiUnitTypeUnitType').val();
     }
 
-    function getKpiUnitTypeGroupIdVal() {
-        return $('#kpiUnitTypeGroupId').val();
+    function getKpiUnitTypeGroupUnitTypeIdVal() {
+        return $('#kpiUnitTypeGroupUnitTypeId').val();
     }
 
     function setupPercentage() {
@@ -66,7 +66,7 @@
     }
 
     async function initializeData() {
-        if (kpiUnitTypeUnitType && kpiUnitTypeYearPeriodId && kpiUnitTypeGroupId) {
+        if (kpiUnitTypeUnitType && kpiUnitTypeYearPeriodId && kpiUnitTypeGroupUnitTypeId) {
             try {
                 const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_kpi_unit_type`, {
                     method: 'POST',
@@ -74,7 +74,7 @@
                     body: new URLSearchParams({
                         unit_type: kpiUnitTypeUnitType,
                         year_period_id: kpiUnitTypeYearPeriodId,
-                        group_id: kpiUnitTypeGroupId,
+                        group_unit_type_id: kpiUnitTypeGroupUnitTypeId,
                     }).toString()
                 });
                 const result = await response.json();
@@ -332,12 +332,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -357,12 +363,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -382,12 +394,18 @@
                         page: params.page || 1,
                         year_period_id: kpiUnitTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -428,7 +446,7 @@
                 id: id,
                 unit_type: kpiUnitTypeUnitType,
                 year_period_id: kpiUnitTypeYearPeriodId,
-                group_id: kpiUnitTypeGroupId,
+                group_unit_type_id: kpiUnitTypeGroupUnitTypeId,
                 mode: kpiMode,
                 perspective_id: perspectiveId,
                 objective_id: objectiveId,
@@ -444,7 +462,7 @@
                 calculateAndDisplayPercentageAndTotalWeight();
             }
             toggleButtonLoader(this, false, { data: '<i class="mdi mdi-check"></i>' });
-        }, 30));
+        }, 300));
 
         $(document).on('click', '.btn-cancel', function() {
             const id = $(this).attr('data-id');
@@ -466,7 +484,7 @@
             const data = {
                 unit_type: kpiUnitTypeUnitType,
                 year_period_id: kpiUnitTypeYearPeriodId,
-                group_id: kpiUnitTypeGroupId,
+                group_unit_type_id: kpiUnitTypeGroupUnitTypeId,
                 is_submit: 1
             }
 
@@ -477,7 +495,7 @@
             const data = {
                 unit_type: kpiUnitTypeUnitType,
                 year_period_id: kpiUnitTypeYearPeriodId,
-                group_id: kpiUnitTypeGroupId,
+                group_unit_type_id: kpiUnitTypeGroupUnitTypeId,
                 is_submit: 0
             }
 
@@ -625,7 +643,7 @@
         const data = {
             unit_type: kpiUnitTypeUnitType,
             year_period_id: kpiUnitTypeYearPeriodId,
-            group_id: kpiUnitTypeGroupId,
+            group_unit_type_id: kpiUnitTypeGroupUnitTypeId,
         }
 
         fetch(`${config.siteUrl}mapping/kpi_unit_type/generate_kpi`, {
@@ -635,6 +653,7 @@
         })
         .then(response => response.json())
         .then(response => {
+            console.log(response);
             $('#successMessages').empty();
             if (response.status === 'success') {
                 const units = response.data.units;

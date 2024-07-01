@@ -4,6 +4,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Unit_model extends CI_Model {
     protected $table = 'md_unit_kerja';
 
+    public function get_by_id($id) {
+        $this->db->select("{$this->table}.*")
+                ->from($this->table)
+                ->where("status", 1)
+                ->where("id", $id);
+        return $this->db->get()->row_array();
+    }
+
     public function get_options($search = '', $page = 1) {
         $search = strtolower($search);
         $this->db->like("LOWER(CAST(nm_unit_kerja AS TEXT))", $search);

@@ -37,17 +37,23 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
             });
-        })
+        });
 
         $('#positionType').each(function () {
             $(this).select2({
@@ -61,19 +67,25 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
             });
-        })
+        });
 
-        $('#groupId').each(function () {
+        $('#groupPositionTypeId').each(function () {
             $(this).select2({
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
@@ -85,44 +97,49 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
             });
         })
-        
         $('#positionType').change(async function() {
             const selectedValue = $(this).val();
             isChangingGroupId = false;
 
-            $('#groupId').val('').trigger('change');
+            $('#groupPositionTypeId').val(null).trigger('change');
 
             if (selectedValue) {
                 $(`#formMapping`).find(`#error-position_type`).html('');
-                await getPositionList(selectedValue);
+                await getPositionTypeList(selectedValue);
             } else {
-                $(`#formMapping`).find(`#error-position_type`).html('Please select position first');
-                $('#groupId').val('').trigger('change');
-                $('#groupTypeContainer').addClass('d-none')
+                $(`#formMapping`).find(`#error-position_type`).html('Please select position type first');
+                $('#groupPositionTypeId').val('').trigger('change');
+                $('#groupPositionContainer').addClass('d-none')
             }
         });
 
-        $('#groupId').change(async function() {
+        $('#groupPositionTypeId').change(async function() {
             if (isChangingGroupId) return;
             isChangingGroupId = true;
 
             const selectedValue = $(this).val();
-            const selectedPositionGroup = $('#positionType').val();
+            const selectedPositionType = $('#positionType').val();
 
-            if (!selectedPositionGroup) {
-                $(`#formMapping`).find(`#error-position_type`).html('Please select position first');
-                $('#groupId').val('').trigger('change');
+            if (!selectedPositionType) {
+                $(`#formMapping`).find(`#error-position_type`).html('Please select position type first');
+                $('#groupPositionTypeId').val('').trigger('change');
                 isChangingGroupId = false;
                 return;
             }
@@ -134,32 +151,32 @@
         });
     }
 
-    async function handleGroupChange(groupId) {
+    async function handleGroupChange(groupPositionTypeId) {
         currentSelectedPositions = [];
         previousSelectedPositions = [];
         
         toggleUpdateButton();
-        if (groupId) {
+        if (groupPositionTypeId) {
             $('.checkbox').prop('checked', false).prop('disabled', false);
             $('#btnModalEditGroup, #btnModalDeleteGroup').removeClass('d-none');
 
-            await fetchPositionsByGroupId(groupId);
+            await fetchPositionsByGroupId(groupPositionTypeId);
         } else {
             $('.checkbox').prop('checked', false).prop('disabled', true);
             $('#btnModalEditGroup, #btnModalDeleteGroup').addClass('d-none');
         }
     }
 
-    async function fetchPositionsByGroupId(groupId) {
+    async function fetchPositionsByGroupId(groupPositionTypeId) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_positions_by_group_id/${groupId}`, { method: 'GET' });
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_positions_by_group_position_type_id/${groupPositionTypeId}`, { method: 'GET' });
             const result = await response.json();
             const positions = result.data;
 
             positions.forEach(position => {
-                $(`.checkbox[value="${position.id}"]`).prop('checked', true);
-                currentSelectedPositions.push(position.id);
-                previousSelectedPositions.push(position.id);
+                $(`.checkbox[value="${position.position_id}"]`).prop('checked', true);
+                currentSelectedPositions.push(position.position_id);
+                previousSelectedPositions.push(position.position_id);
             });
         } catch (error) {
             displayToast('Error', 'Error fetching positions data', 'error');
@@ -206,7 +223,6 @@
             const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_group_by_id/${id}`, { method: 'GET' });
             const result = await response.json();
             const data = result.data;
-            console.log(data)
             $('#id').val(data.id);
             $('#groupType').val(data.group_type);
             $('#description').val(data.description);
@@ -251,7 +267,7 @@
 
             if (result.status === 'success') {
                 displayToast('Success', 'Your data has been deleted', 'success');
-                $('#groupId').val('').trigger('change');
+                $('#groupPositionTypeId').val('').trigger('change');
             } else {
                 displayToast('Error', 'Data could not be deleted. The record is still related to other records', 'error');
             }
@@ -261,7 +277,7 @@
         toggleBarLoader(null, false);
     }
 
-    async function getPositionList(positionType) {
+    async function getPositionTypeList(positionType) {
         try {
             const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_position_by_position_type`, {
                 method: 'POST',
@@ -276,11 +292,11 @@
     }
 
     async function displayPositionList(data) {
-        const groupTypeContainer = $('#groupTypeContainer');
-        groupTypeContainer.empty();
+        const groupPositionContainer = $('#groupPositionContainer');
+        groupPositionContainer.empty();
     
         const title = $('<h5>Position List</h5>');
-        groupTypeContainer.append(title);
+        groupPositionContainer.append(title);
     
         const row = $('<div class="row"></div>');
     
@@ -316,11 +332,11 @@
         });
     
         row.append(column1).append(column2);
-        groupTypeContainer.append(row);
-        groupTypeContainer.removeClass('d-none');
+        groupPositionContainer.append(row);
+        groupPositionContainer.removeClass('d-none');
         $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
 
-        if ($('#groupId').val()) {
+        if ($('#groupPositionTypeId').val()) {
             $('.checkbox').prop('disabled', false);
         } else {
             $('.checkbox').prop('disabled', true);
@@ -441,13 +457,12 @@
         try {
             const addedPositions = currentSelectedPositions.filter(position => !previousSelectedPositions.includes(position));
             const removedPositions = previousSelectedPositions.filter(position => !currentSelectedPositions.includes(position));
-            console.log(addedPositions, removedPositions);
             
             const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/update_selected_positions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    group_id: $('#groupId').val(),
+                    group_position_type_id: $('#groupPositionTypeId').val(),
                     added_positions: JSON.stringify(addedPositions),
                     removed_positions: JSON.stringify(removedPositions)
                 }).toString()
@@ -476,17 +491,17 @@
             url = 'mapping/kpi_position_type/update_group';
             formData = new URLSearchParams(new FormData($('#formGroup')[0]));
         } else {
-            const selectedPositionGroup = $(`#positionType`).find('option:selected');
-            const selectedPositionGroupName = selectedPositionGroup.text();
+            const selectedPositionType = $(`#positionType`).find('option:selected');
+            const selectedPositionTypeName = selectedPositionType.text();
             const selectedYearPeriodId = $(`#yearPeriodId`).find('option:selected');
             const selectedYearPeriodName = selectedYearPeriodId.text();
-            const selectedGroupId = $(`#groupId`).find('option:selected');
+            const selectedGroupId = $(`#groupPositionTypeId`).find('option:selected');
             const selectedGroupName = selectedGroupId.text();
             
             url = 'mapping/kpi_position_type/mapping_data';
 
             formData = new URLSearchParams(new FormData($('#formMapping')[0]));
-            formData.append('position_type_name', selectedPositionGroupName);
+            formData.append('position_type_name', selectedPositionTypeName);
             formData.append('year_period_name', selectedYearPeriodName);
             formData.append('group_name', selectedGroupName);
         }
@@ -519,9 +534,9 @@
                 displayToast('Success', response.message, 'success');
                 $('#formGroup').trigger('reset');
                 $('#modalGroup').modal('hide');
-                $('#groupId').empty();
+                $('#groupPositionTypeId').empty();
                 const newOption = new Option('- Choose -', '', true, true);
-                $('#groupId').append(newOption).trigger('change');
+                $('#groupPositionTypeId').append(newOption).trigger('change');
                 mode = '';
             } else {
                 displayToast('Success', response.message + ', generate to KPI page...', 'success');

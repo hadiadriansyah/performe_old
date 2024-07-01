@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/master/Kpi_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Kpi_repository implements Kpi_repository_interface
 {
     protected $model;
@@ -69,17 +70,15 @@ class Kpi_repository implements Kpi_repository_interface
 
     #####
     
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 
-    public function get_kpi_counter_options_by_year_period_id($search = '', $page = 1, $year_period_id = '')
-    {
+    public function get_kpi_counter_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->kpi_counter_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 
-    public function get_kpi_polarization_options_by_year_period_id($search = '', $page = 1, $year_period_id = '')
-    {
+    public function get_kpi_polarization_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->kpi_polarization_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 }

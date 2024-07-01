@@ -16,8 +16,7 @@
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <form id="formMapping">
-                    <p class="card-description"> Mapping </p>
+                <form id="formMapping">                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group row">

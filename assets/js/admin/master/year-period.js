@@ -251,7 +251,7 @@
     }
     
     $('#formYearPeriod').on('reset', function() {
-        $('.error-message').html('');
-        $('.select2-js-basic').val('0').trigger('change');
+        $('#formYearPeriod').find('.error-message').html('');
+        $('#formYearPeriod').find('.select2-js-basic').val('0').trigger('change');
     });
 })(jQuery);

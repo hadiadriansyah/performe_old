@@ -200,9 +200,9 @@ class Perspective extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
-        echo json_encode($data);
+        $this->json_response->success('Data successfully fetched.', $data);
     }
 }

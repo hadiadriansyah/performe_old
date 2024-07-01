@@ -37,19 +37,25 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
             });
         })
 
-        $('#groupId').each(function () {
+        $('#groupUnitTypeId').each(function () {
             $(this).select2({
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
@@ -61,12 +67,18 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -76,19 +88,19 @@
             const selectedValue = $(this).val();
             isChangingGroupId = false;
 
-            $('#groupId').val('').trigger('change');
+            $('#groupUnitTypeId').val(null).trigger('change');
 
             if (selectedValue) {
                 $(`#formMapping`).find(`#error-unit_type`).html('');
                 await getUnitTypeList(selectedValue);
             } else {
                 $(`#formMapping`).find(`#error-unit_type`).html('Please select unit type first');
-                $('#groupId').val('').trigger('change');
+                $('#groupUnitTypeId').val('').trigger('change');
                 $('#groupUnitContainer').addClass('d-none')
             }
         });
 
-        $('#groupId').change(async function() {
+        $('#groupUnitTypeId').change(async function() {
             if (isChangingGroupId) return;
             isChangingGroupId = true;
 
@@ -97,7 +109,7 @@
 
             if (!selectedUnitType) {
                 $(`#formMapping`).find(`#error-unit_type`).html('Please select unit type first');
-                $('#groupId').val('').trigger('change');
+                $('#groupUnitTypeId').val('').trigger('change');
                 isChangingGroupId = false;
                 return;
             }
@@ -109,28 +121,27 @@
         });
     }
 
-    async function handleGroupChange(groupId) {
+    async function handleGroupChange(groupUnitTypeId) {
         currentSelectedUnits = [];
         previousSelectedUnits = [];
         
         toggleUpdateButton();
-        if (groupId) {
+        if (groupUnitTypeId) {
             $('.checkbox').prop('checked', false).prop('disabled', false);
             $('#btnModalEditGroup, #btnModalDeleteGroup').removeClass('d-none');
 
-            await fetchUnitsByGroupId(groupId);
+            await fetchUnitsByGroupId(groupUnitTypeId);
         } else {
             $('.checkbox').prop('checked', false).prop('disabled', true);
             $('#btnModalEditGroup, #btnModalDeleteGroup').addClass('d-none');
         }
     }
 
-    async function fetchUnitsByGroupId(groupId) {
+    async function fetchUnitsByGroupId(groupUnitTypeId) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_units_by_group_id/${groupId}`, { method: 'GET' });
+            const response = await fetch(`${config.siteUrl}mapping/kpi_unit_type/get_units_by_group_unit_type_id/${groupUnitTypeId}`, { method: 'GET' });
             const result = await response.json();
             const units = result.data;
-
             units.forEach(unit => {
                 $(`.checkbox[value="${unit.unit_id}"]`).prop('checked', true);
                 currentSelectedUnits.push(unit.unit_id);
@@ -225,7 +236,7 @@
 
             if (result.status === 'success') {
                 displayToast('Success', 'Your data has been deleted', 'success');
-                $('#groupId').val('').trigger('change');
+                $('#groupUnitTypeId').val('').trigger('change');
             } else {
                 displayToast('Error', 'Data could not be deleted. The record is still related to other records', 'error');
             }
@@ -294,7 +305,7 @@
         groupUnitContainer.removeClass('d-none');
         $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
 
-        if ($('#groupId').val()) {
+        if ($('#groupUnitTypeId').val()) {
             $('.checkbox').prop('disabled', false);
         } else {
             $('.checkbox').prop('disabled', true);
@@ -420,7 +431,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    group_id: $('#groupId').val(),
+                    group_unit_type_id: $('#groupUnitTypeId').val(),
                     added_units: JSON.stringify(addedUnits),
                     removed_units: JSON.stringify(removedUnits)
                 }).toString()
@@ -453,7 +464,7 @@
             const selectedUnitTypeName = selectedUnitType.text();
             const selectedYearPeriodId = $(`#yearPeriodId`).find('option:selected');
             const selectedYearPeriodName = selectedYearPeriodId.text();
-            const selectedGroupId = $(`#groupId`).find('option:selected');
+            const selectedGroupId = $(`#groupUnitTypeId`).find('option:selected');
             const selectedGroupName = selectedGroupId.text();
             
             url = 'mapping/kpi_unit_type/mapping_data';
@@ -492,9 +503,9 @@
                 displayToast('Success', response.message, 'success');
                 $('#formGroup').trigger('reset');
                 $('#modalGroup').modal('hide');
-                $('#groupId').empty();
+                $('#groupUnitTypeId').empty();
                 const newOption = new Option('- Choose -', '', true, true);
-                $('#groupId').append(newOption).trigger('change');
+                $('#groupUnitTypeId').append(newOption).trigger('change');
                 mode = '';
             } else {
                 displayToast('Success', response.message + ', generate to KPI page...', 'success');

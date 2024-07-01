@@ -21,12 +21,11 @@
                         <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">Position KPIs</h4>
                             <button type="button" class="btn btn-light btn-submit-kpi is-submit-kpi d-none" disabled>Submit</button>
-                            <div class="btn-cancel-generate-submit-kpi is-submit-kpi d-none">
+                            <div class="btn-cancel-submit-kpi is-submit-kpi d-none">
 
                                 <?php if ($is_admin == SYSTEM_ADMIN): ?>
                                     <button type="button" class="btn btn-light btn-cancel-submit-kpi">Cancel Submit</button>
                                 <?php endif; ?>
-                                <button type="button" class="btn btn-light btn-generate-kpi">Generate</button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -34,7 +33,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <input type="hidden" id="kpiPositionTypeYearPeriodId" value="<?= $year_period_id ?>">
                                     <input type="hidden" id="kpiPositionTypePositionType" value="<?= $position_type ?>">
-                                    <input type="hidden" id="kpiPositionTypeGroupId" value="<?= $group_id ?>">
+                                    <input type="hidden" id="kpiPositionTypeGroupPositionTypeId" value="<?= $group_position_type_id ?>">
                                     <div class="row">
                                         <div class="col-12 mb-2">
                                             <label for="positionTypeName" class="form-label me-2">Position Type Name</label>
@@ -64,7 +63,7 @@
                                 </div>
                             </div>
                             <hr class="mt-5">
-                            <div id="createKpi" class="row d-flex align-items-center d-none">
+                            <div id="createKpi" class="row d-flex align-items-center">
                                 <div class="form-group col-md-4 col-sm-6">
                                     <label for="groupUnitTypeId" class="mb-3">Group Unit Type</label>
                                     <select class="form-select select2-js-basic" id="groupUnitTypeId" name="group_unit_type_id">
@@ -76,7 +75,17 @@
                                     <button type="button" id="btnCreateKPI" class="btn btn-gradient-primary btn-md">Create KPI</button>
                                 </div>
                             </div>
-                            <div id="kpiContainer"></div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div id="kpiContainer"></div>
+                                </div>
+                                <div class="col-4">
+                                    <div id="kpiUnitTypeContainer"></div>
+                                </div>
+                                <div class="col-8">
+                                    <div id="kpiPositionTypeContainer"></div>
+                                </div>
+                            </div>
                             
                             <div class="modal fade" id="modalGenerate" tabindex="-1" role="dialog" aria-labelledby="modalLabelGenerateKpi" aria-hidden="true">
                                 <div class="modal-dialog" role="document">

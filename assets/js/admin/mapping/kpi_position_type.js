@@ -5,8 +5,10 @@
     let isSubmitting = false;
     const kpiPositionTypeYearPeriodId = getkpiPositionTypeYearPeriodIdVal();
     const kpiPositionTypePositionType = getKpiPositionTypePositionTypeVal();
-    const kpiPositionTypeGroupId = getKpiPositionTypeGroupIdVal();
-    let dataKpi = [];
+    const kpiPositionTypeGroupPositionTypeId = getKpiPositionTypeGroupPositionTypeIdVal();
+    let kpiUnitTypes = [];
+    let dataKpiUnitType = [];
+    let dataKpiPositionType = [];
     let dataKpiBeforeEdit = []
     const newItemKPI = {
         perspective_id: null,
@@ -49,8 +51,8 @@
         return $('#kpiPositionTypePositionType').val();
     }
 
-    function getKpiPositionTypeGroupIdVal() {
-        return $('#kpiPositionTypeGroupId').val();
+    function getKpiPositionTypeGroupPositionTypeIdVal() {
+        return $('#kpiPositionTypeGroupPositionTypeId').val();
     }
 
     function setupPercentage() {
@@ -66,7 +68,42 @@
     }
 
     async function initializeData() {
-        if (kpiPositionTypePositionType && kpiPositionTypeYearPeriodId && kpiPositionTypeGroupId) {
+        const kpiPositionTypes = await getgetKpiPositionType();
+        if (kpiPositionTypes && kpiPositionTypes.length > 0) {
+            $('#createKpi').addClass('d-none');
+            kpiUnitTypes = await getKpiUnitTypeByGroupUnitTypeId(kpiPositionTypes);
+            dataKpiUnitType = await processKpiUnitTypeData(kpiUnitTypes);
+            dataKpiPositionType = await processKpiPositionTypeData(kpiPositionTypes);
+            const totalWeightSumKpiPositionType = dataKpiPositionType.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
+            updatePercentage(totalWeightSumKpiPositionType);
+            renderKpiUnitType();
+            renderKpiPositionType();
+        } else {
+            $('#createKpi').removeClass('d-none');
+        }
+    }
+    
+    async function getKpiUnitTypeByGroupUnitTypeId(kpiPositionType) {
+        const kpiPositionTypeGroupUnitTypeId = kpiPositionType[0].group_unit_type_id;
+        try {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_kpi_unit_type_by_group_unit_type_id`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    year_period_id: kpiPositionTypeYearPeriodId,
+                    group_unit_type_id: kpiPositionTypeGroupUnitTypeId,
+                }).toString()
+            });
+            const result = await response.json();
+            const data = result.data;
+            return data;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    async function getgetKpiPositionType() {
+        if (kpiPositionTypePositionType && kpiPositionTypeYearPeriodId && kpiPositionTypeGroupPositionTypeId) {
             try {
                 const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_kpi_position_type`, {
                     method: 'POST',
@@ -74,22 +111,14 @@
                     body: new URLSearchParams({
                         position_type: kpiPositionTypePositionType,
                         year_period_id: kpiPositionTypeYearPeriodId,
-                        group_id: kpiPositionTypeGroupId,
+                        group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                     }).toString()
                 });
                 const result = await response.json();
                 const data = result.data;
-                if (data.length > 0) {
-                    $('#createKpi').addClass('d-none');
-                    dataKpi = await processKpiData(data);
-                    const totalWeightSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
-                    updatePercentage(totalWeightSum);
-                    renderKPI();
-                } else {
-                    $('#createKpi').removeClass('d-none');
-                }
+                return data;
             } catch (error) {
-                displayToast('Error', 'Error fetching KPI', 'error');
+                return false;
             }
         }
     }
@@ -97,15 +126,15 @@
     function toggleSubmitButton() {
         if (kpiIsSubmit == 1) {
             $('.is-submit-kpi').addClass('d-none');
-            $('.btn-cancel-generate-submit-kpi').removeClass('d-none');
+            $('.btn-cancel-submit-kpi').removeClass('d-none');
         } else {
             $('.is-submit-kpi').removeClass('d-none');
-            $('.btn-cancel-generate-submit-kpi').addClass('d-none');
+            $('.btn-cancel-submit-kpi').addClass('d-none');
         }
     }
 
-    async function processKpiData(data) {
-        const groupedData = data.reduce((acc, item) => {
+    async function processKpiUnitTypeData(kpiUnitType) {
+        const groupedData = kpiUnitType.reduce((acc, item) => {
             const perspective = item.perspective_id;
             const objective = item.objective_id;
 
@@ -142,6 +171,54 @@
 
             objectiveDetail.total_weight += parseFloat(item.weight);
             acc[perspective].total_weight_perspective += parseFloat(item.weight);
+            return acc;
+        }, {});
+
+        return Object.values(groupedData);
+    }
+
+    async function processKpiPositionTypeData(kpiPositionType) {
+        const groupedData = kpiPositionType.reduce((acc, item) => {
+            const perspective = item.perspective_id;
+            const objective = item.objective_id;
+
+            if (!acc[perspective]) {
+                acc[perspective] = {
+                    perspective_id: item.perspective_id,
+                    perspective: item.perspective,
+                    is_submit: item.is_submit,
+                    total_weight_perspective: 0,
+                    objective_detail: []
+                };
+            }
+
+            let objectiveDetail = acc[perspective].objective_detail.find(obj => obj.objective_id === objective);
+            if (!objectiveDetail) {
+                objectiveDetail = {
+                    objective_id: item.objective_id,
+                    objective: item.objective,
+                    kpi_detail: [],
+                    total_weight: 0
+                };
+                acc[perspective].objective_detail.push(objectiveDetail);
+            }
+
+            objectiveDetail.kpi_detail.push({
+                id: item.id,
+                perspective_id: item.perspective_id,
+                objective_id: item.objective_id,
+                kpi_id: item.kpi_id,
+                position_type: item.position_type,
+                group_position_type_id: item.group_position_type_id,
+                group_unit_type_id: item.group_unit_type_id,
+                kpi_unit_type_id: item.kpi_unit_type_id,
+                weight: item.weight,
+                score: item.score,
+                mode: null
+            });
+
+            objectiveDetail.total_weight += parseFloat(item.weight);
+            acc[perspective].total_weight_perspective += parseFloat(item.weight);
             kpiIsSubmit = item.is_submit;
             return acc;
         }, {});
@@ -149,20 +226,20 @@
         return Object.values(groupedData);
     }
 
-    function renderKPI() {
-        if (dataKpi.length === 0) return;
-    
+    function renderKpiUnitType() {
+        if (dataKpiUnitType.length === 0) return;
+        
         let kpis = [];
         let html = '';
     
-        dataKpi.forEach(perspective => {
+        dataKpiUnitType.forEach(perspective => {
             html += `
                 <div class="row mb-3 mt-3">
                     <div class="col-md-12">
                         <div class="card">
                             <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                                 <h5>${perspective.perspective}</h5>
-                                <span class="badge bg-danger" id="totalWeight-${perspective.perspective_id}">${perspective.total_weight_perspective} %</span>
+                                <span class="badge bg-danger" id="kpiUnitTypeTotalWeight-${perspective.perspective_id}">${perspective.total_weight_perspective} %</span>
                             </div>
                             <div class="card-body px-3 py-3">
             `;
@@ -179,15 +256,12 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>No</th>
+                                    <th class="is-submit-kpi">Action</th>
                                     <th>KPI</th>
+                                    <th>Weight (%)</th>
                                     <th>Measure</th>
-                                    <th>Target</th>
-                                    <th>Actual</th>
                                     <th>Counter</th>
                                     <th>Polarization</th>
-                                    <th>Index</th>
-                                    <th>Weight (%)</th>
-                                    <th>Score</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -196,38 +270,37 @@
                 let no = 1;
                 objective.kpi_detail.forEach(kpi => {
                     kpis.push(kpi);
+                    
+                    const isChecked = dataKpiPositionType.some(perspective => 
+                        perspective.objective_detail.some(objective => 
+                            objective.kpi_detail.some(posType => posType.kpi_unit_type_id === kpi.id)
+                        )
+                    ) ? 'checked' : '';
                     html += `
                         <tr>
                             <td>${no++}</td>
+                            <td class="is-submit-kpi">
+                                <div class="form-check w-100">
+                                    <label class="form-check-label"><input id="kpiUnitTypeCheckId-${kpi.id}" class="checkbox" type="checkbox" data-bs-toggle="tooltip" data-placement="right" title="check/uncheck" value="${kpi.id}" ${isChecked}></label>
+                                </div>
+                            </td>
                             <td>
-                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiId-${kpi.id}" name="kpi_id-${kpi.id}" data-id="${kpi.id}" disabled>
+                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiUnitTypeId-${kpi.id}" name="kpi_unit_type_id_${kpi.id}" data-kpi-unit-type-id="${kpi.id}" disabled>
                                     <option value="">- Choose -</option>
                                 </select>
-                                <div class="error-message text-small text-danger mt-1" id="error-kpi_id-${kpi.id}"></div>
+                                <div class="error-message text-small text-danger mt-1" id="error-kpi_unit_type_id_${kpi.id}"></div>
                             </td>
                             <td>
-                                <span id="measurement-${kpi.id}">-</span>
+                                <input type="text" class="form-control" id="kpiUnitTypeWeight-${kpi.id}" name="kpi_unit_type_weight_${kpi.id}" value="${kpi.weight}" disabled>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-danger" disabled>target</button>
+                                <span id="kpiUnitTypeMeasurement-${kpi.id}">-</span>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-danger" disabled>actual</button>
+                                <span id="kpiUnitTypeCounter-${kpi.id}">-</span>
                             </td>
                             <td>
-                                <span id="counter-${kpi.id}">-</span>
-                            </td>
-                            <td>
-                                <span id="polarization-${kpi.id}">-</span>
-                            </td>
-                            <td>
-                                <span id="index-${kpi.id}">-</span>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control" id="weight-${kpi.id}" name="weight-${kpi.id}" value="${kpi.weight}" disabled>
-                            </td>
-                            <td>
-                                <span id="score-${kpi.id}">0</span>
+                                <span id="kpiUnitTypePolarization-${kpi.id}">-</span>
                             </td>
                         </tr>
                     `;
@@ -248,45 +321,351 @@
             `;
         });
 
-        $('#kpiContainer').html(html);
-        $('[data-bs-toggle="tooltip"]').tooltip();
-        toggleSubmitButton();
+        $('#kpiUnitTypeContainer').html(html);
         initializeSelect2();
-        setupValueKpis(kpis);
+        $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
+        setupValueKpiUnitTypes(kpis);
+        setupCheckboxEventHandlers();
+    }
+    
+    function setupCheckboxEventHandlers() {
+        $('.checkbox').on('change', _.debounce(async function() {
+            const kpiUnitTypeId = $(this).val();
+            toggleBarLoader(this, true);
+            if ($(this).is(':checked')) {
+                await insertKpiPositionType(kpiUnitTypeId, this);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            } else {
+                await deleteKpiPositionType(kpiUnitTypeId, this);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            toggleBarLoader(this, false);
+        }, 300));
     }
 
-    function setupValueKpis(kpis) {
+    async function insertKpiPositionType(kpiUnitTypeId, checkbox) {
+        const kpiUnitType = kpiUnitTypes.find(unitType => unitType.id === kpiUnitTypeId);
+        const data = {
+            id: generateUUIDv7(),
+            position_type: kpiPositionTypePositionType,
+            year_period_id: kpiPositionTypeYearPeriodId,
+            perspective_id: kpiUnitType.perspective_id,
+            objective_id: kpiUnitType.objective_id,
+            kpi_id: kpiUnitType.kpi_id,
+            weight: 0,
+            is_submit: 0,
+            group_position_type_id: kpiPositionTypeGroupPositionTypeId,
+            group_unit_type_id: kpiUnitType.group_unit_type_id,
+            kpi_unit_type_id: kpiUnitType.id,
+        }
+        try {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/insert_kpi_position_type`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(data).toString()
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                displayToast('Success', result.message, 'success');
+                updateKpiIdInDataKPI(result.data, 'insert');
+            } else {
+                displayToast('Error', result.message, 'error');
+                $(checkbox).prop('checked', false);
+            }
+        } catch (error) {
+            displayToast('Error', 'Error insert kpi position type', 'error');
+            $(checkbox).prop('checked', false);
+        }
+    }
+
+    async function deleteKpiPositionType(kpiUnitTypeId, checkbox) {
+        const kpiUnitType = kpiUnitTypes.find(unitType => unitType.id === kpiUnitTypeId);
+        const data = {
+            year_period_id: kpiPositionTypeYearPeriodId,
+            position_type: kpiPositionTypePositionType,
+            group_position_type_id: kpiPositionTypeGroupPositionTypeId,
+            group_unit_type_id: kpiUnitType.group_unit_type_id,
+            kpi_unit_type_id: kpiUnitType.id,
+        }
+        try {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/delete_kpi_position_type`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(data).toString()
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                displayToast('Success', result.message, 'success');
+                await updateKpiIdInDataKPI(data, 'delete');
+            } else {
+                displayToast('Error', result.message, 'error');
+                $(checkbox).prop('checked', true);
+            }
+        } catch (error) {
+            displayToast('Error', 'Error delete kpi position type', 'error');
+            $(checkbox).prop('checked', true);
+        }
+
+    }
+
+    async function updateKpiIdInDataKPI(data, action) {
+        if (action === 'insert') {
+            let id = data.id;
+            let perspectiveFound = false;
+            let objectiveFound = false;
+
+            dataKpiPositionType.forEach(perspective => {
+                if (perspective.perspective_id === data.perspective_id) {
+                    perspectiveFound = true;
+                    perspective.objective_detail.forEach(objective => {
+                        if (objective.objective_id === data.objective_id) {
+                            objectiveFound = true;
+                            let kpiFound = false;
+                            objective.kpi_detail.forEach(kpi => {
+                                if (kpi.id === id) {
+                                    kpi.kpi_id = data.kpi_id;
+                                    kpi.weight = parseFloat(data.weight);
+                                    kpi.mode = '';
+                                    kpiFound = true;
+                                }
+                            });
+                            if (!kpiFound) {
+                                objective.kpi_detail.push({
+                                    id: data.id,
+                                    perspective_id: data.perspective_id,
+                                    objective_id: data.objective_id,
+                                    kpi_id: data.kpi_id,
+                                    position_type: data.position_type,
+                                    group_position_type_id: data.group_position_type_id,
+                                    group_unit_type_id: data.group_unit_type_id,
+                                    kpi_unit_type_id: data.kpi_unit_type_id,
+                                    weight: parseFloat(data.weight),
+                                    score: 0,
+                                    mode: ''
+                                });
+                            }
+                            objective.total_weight = objective.kpi_detail.reduce((sum, kpi) => sum + parseFloat(kpi.weight), 0);
+                        }
+                    });
+                    perspective.total_weight_perspective = perspective.objective_detail.reduce((sum, objective) => sum + parseFloat(objective.total_weight), 0);
+                }
+            });
+
+            if (!perspectiveFound) {
+                dataKpiPositionType.push({
+                    perspective_id: data.perspective_id,
+                    perspective: data.perspective,
+                    is_submit: 0,
+                    total_weight_perspective: parseFloat(data.weight),
+                    objective_detail: [{
+                        objective_id: data.objective_id,
+                        objective: data.objective,
+                        kpi_detail: [{
+                            id: data.id,
+                            perspective_id: data.perspective_id,
+                            objective_id: data.objective_id,
+                            kpi_id: data.kpi_id,
+                            position_type: data.position_type,
+                            group_position_type_id: data.group_position_type_id,
+                            group_unit_type_id: data.group_unit_type_id,
+                            kpi_unit_type_id: data.kpi_unit_type_id,
+                            weight: parseFloat(data.weight),
+                            score: 0,
+                            mode: ''
+                        }],
+                        total_weight: parseFloat(data.weight)
+                    }]
+                });
+            } else if (!objectiveFound) {
+                dataKpiPositionType.forEach(perspective => {
+                    if (perspective.perspective_id === data.perspective_id) {
+                        perspective.objective_detail.push({
+                            objective_id: data.objective_id,
+                            objective: data.objective,
+                            kpi_detail: [{
+                                id: data.id,
+                                perspective_id: data.perspective_id,
+                                objective_id: data.objective_id,
+                                kpi_id: data.kpi_id,
+                                position_type: data.position_type,
+                                group_position_type_id: data.group_position_type_id,
+                                group_unit_type_id: data.group_unit_type_id,
+                                kpi_unit_type_id: data.kpi_unit_type_id,
+                                weight: parseFloat(data.weight),
+                                score: 0,
+                                mode: ''
+                            }],
+                            total_weight: parseFloat(data.weight)
+                        });
+                        perspective.total_weight_perspective += parseFloat(data.weight);
+                    }
+                });
+            }
+        } else if (action === 'delete') {
+            dataKpiPositionType = dataKpiPositionType.filter(perspective => {
+                perspective.objective_detail = perspective.objective_detail.filter(objective => {
+                    objective.kpi_detail = objective.kpi_detail.filter(kpi => 
+                        !(kpi.position_type === data.position_type &&
+                          kpi.group_position_type_id === data.group_position_type_id &&
+                          kpi.group_unit_type_id === data.group_unit_type_id &&
+                          kpi.kpi_unit_type_id === data.kpi_unit_type_id)
+                    );
+                    return objective.kpi_detail.length > 0;
+                });
+                return perspective.objective_detail.length > 0;
+            });
+        }
+        
+        renderKpiPositionType();
+    }
+
+    function setupValueKpiUnitTypes(kpis) {
         kpis.forEach(async kpi => {
-            setupValueKpi(kpi);
+            setupValueKpiUnitType(kpi);
         });
     }
 
-    async function setupValueKpi(kpi) {
-        if (kpi.mode !== 'add') {
-            $(`[data-id="${kpi.id}"]`).attr('data-kpi-mode', '');
-
-            if (kpi.kpi_id) {
-                const data = await getKpiById(kpi.kpi_id);
-                if (data) {
-                    $(`#measurement-${kpi.id}`).text(data.measurement);
-                    $(`#counter-${kpi.id}`).text(data.counter);
-                    $(`#polarization-${kpi.id}`).text(data.polarization);
-                    
-                    const newOption = new Option(data.kpi, data.id, true, true);
-                    $(`#kpiId-${kpi.id}`).append(newOption).trigger('change');
-                }
-
+    async function setupValueKpiUnitType(kpi) {
+        if (kpi.kpi_id) {
+            const data = await getKpiById(kpi.kpi_id);
+            if (data) {
+                $(`#kpiUnitTypeMeasurement-${kpi.id}`).text(data.measurement);
+                $(`#kpiUnitTypeCounter-${kpi.id}`).text(data.counter);
+                $(`#kpiUnitTypePolarization-${kpi.id}`).text(data.polarization);
+                
+                const newOption = new Option(data.kpi, data.id, true, true);
+                $(`#kpiUnitTypeId-${kpi.id}`).append(newOption).trigger('change');
             }
 
-            $(`#kpiId-${kpi.id}`).on('change', async function() {
-                const id = $(this).val();
-                const data = await getKpiById(id);
-                if (data) {
-                    $(`#measurement-${kpi.id}`).text(data.measurement);
-                    $(`#counter-${kpi.id}`).text(data.counter);
-                    $(`#polarization-${kpi.id}`).text(data.polarization);
-                }
+        }
+    }
+
+    function renderKpiPositionType() {
+        if (dataKpiPositionType.length === 0) {
+            $('#kpiUnitTypeContainer').empty();
+            $('#kpiPositionTypeContainer').empty();
+            initializeData();
+            return;
+        }
+        let kpis = [];
+        let html = '';
+    
+        dataKpiPositionType.forEach(perspective => {
+            html += `
+                <div class="row mb-3 mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                <h5>${perspective.perspective}</h5>
+                                <span class="badge bg-danger" id="kpiPositionTypeTotalWeight-${perspective.perspective_id}">${perspective.total_weight_perspective} %</span>
+                            </div>
+                            <div class="card-body px-3 py-3">
+            `;
+    
+            perspective.objective_detail.forEach(objective => {
+                html += `
+                    <div class="row my-3">
+                        <div class="col-md-12 d-flex justify-content-between align-items-center">
+                            <label class="form-label">${objective.objective}</label>
+                        </div>
+                    </div>
+                    <div class="table-responsive pb-2">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th class="is-submit-kpi">Action</th>
+                                    <th>KPI</th>
+                                    <th>Weight (%)</th>
+                                    <th>Measure</th>
+                                    <th>Counter</th>
+                                    <th>Polarization</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+    
+                let no = 1;
+                objective.kpi_detail.forEach(kpi => {
+                    kpis.push(kpi);
+                    html += `
+                        <tr>
+                            <td>${no++}</td>
+                            <td class="is-submit-kpi">
+                                <button type="button" class="btn btn-sm btn-success btn-icon-text btn-save d-none" data-kpi-position-type-id="${kpi.id}" data-kpi-position-type-perspective-id="${kpi.perspective_id}" data-kpi-position-type-objective-id="${kpi.objective_id}" data-bs-toggle="tooltip" data-placement="right" title="Save">
+                                    <i class="mdi mdi-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger btn-icon-text btn-cancel d-none" data-kpi-position-type-id="${kpi.id}" data-bs-toggle="tooltip" data-placement="right" title="Cancel">
+                                    <i class="mdi mdi-close"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning btn-icon-text btn-edit" data-kpi-position-type-id="${kpi.id}" data-bs-toggle="tooltip" data-placement="right" title="Edit">
+                                    <i class="mdi mdi-pencil"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiPositionTypeId-${kpi.id}" name="kpi_position_type_id_${kpi.id}" data-kpi-position-type-id="${kpi.id}" disabled>
+                                    <option value="">- Choose -</option>
+                                </select>
+                                <div class="error-message text-small text-danger mt-1" id="error-kpi_position_type_id_${kpi.id}"></div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" id="kpiPositionTypeWeight-${kpi.id}" name="kpi_position_type_weight_${kpi.id}" value="${kpi.weight}" disabled>
+                                
+                                <div class="error-message text-small text-danger mt-1" id="error-kpi_position_type_weight_${kpi.id}"></div>
+                            </td>
+                            <td>
+                                <span id="kpiPositionTypeMeasurement-${kpi.id}">-</span>
+                            </td>
+                            <td>
+                                <span id="kpiPositionTypeCounter-${kpi.id}">-</span>
+                            </td>
+                            <td>
+                                <span id="kpiPositionTypePolarization-${kpi.id}">-</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
             });
+
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        $('#kpiPositionTypeContainer').html(html);
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        toggleSubmitButton();
+        initializeSelect2();
+        setupValueKpiPositionTypes(kpis);
+    }
+
+    function setupValueKpiPositionTypes(kpis) {
+        kpis.forEach(async kpi => {
+            setupValueKpiPositionType(kpi);
+        });
+    }
+
+    async function setupValueKpiPositionType(kpi) {
+        if (kpi.kpi_id) {
+            const data = await getKpiById(kpi.kpi_id);
+            if (data) {
+                $(`#kpiPositionTypeMeasurement-${kpi.id}`).text(data.measurement);
+                $(`#kpiPositionTypeCounter-${kpi.id}`).text(data.counter);
+                $(`#kpiPositionTypePolarization-${kpi.id}`).text(data.polarization);
+                
+                const newOption = new Option(data.kpi, data.id, true, true);
+                $(`#kpiPositionTypeId-${kpi.id}`).append(newOption).trigger('change');
+            }
+
         }
     }
 
@@ -309,8 +688,6 @@
             })
         })
 
-        
-
         $('#groupUnitTypeId').each(function () {
             $(this).select2({
                 theme: 'bootstrap',
@@ -323,12 +700,18 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -348,12 +731,18 @@
                         page: params.page || 1,
                         year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -373,12 +762,18 @@
                         page: params.page || 1,
                         year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -398,12 +793,18 @@
                         page: params.page || 1,
                         year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -413,17 +814,17 @@
     
     function initializeModalButton() {
         $(document).on('click', '.btn-edit', function() {
-            const id = $(this).attr('data-id');
+            const id = $(this).attr('data-kpi-position-type-id');
             
-            const selectedOption = $(`#kpiId-${id}`).find('option:selected');
+            const selectedOption = $(`#kpiPositionTypeId-${id}`).find('option:selected');
             const selectedValue = selectedOption.val();
-            const selectedName = selectedOption.text();
+            const selectedText = selectedOption.text();
             const dataBeforeEdit = {
                 id: id,
                 kpi_id: selectedValue,
-                kpi_name: selectedName,
-                weight: $(`#weight-${id}`).val(),
-                score: $(`#score-${id}`).text()
+                kpi_name: selectedText,
+                weight: $(`#kpiPositionTypeWeight-${id}`).val(),
+                score: $(`#kpiPositionTypeScore-${id}`).text()
             }
 
             dataKpiBeforeEdit.push(dataBeforeEdit);
@@ -432,20 +833,18 @@
         });
         
         $(document).on('click', '.btn-save', _.debounce(async function() {
-            const id = $(this).attr('data-id');
-            const kpiMode = $(this).attr('data-kpi-mode');
-            const perspectiveId = $(this).attr('data-perspective-id');
-            const objectiveId = $(this).attr('data-objective-id');
+            const id = $(this).attr('data-kpi-position-type-id');
+            const perspectiveId = $(this).attr('data-kpi-position-type-perspective-id');
+            const objectiveId = $(this).attr('data-kpi-position-type-objective-id');
         
-            const kpiId = $(`#kpiId-${id}`).val();
-            const weight = $(`#weight-${id}`).val();
+            const kpiId = $(`#kpiPositionTypeId-${id}`).val();
+            const weight = $(`#kpiPositionTypeWeight-${id}`).val();
             
             const data = {
                 id: id,
                 position_type: kpiPositionTypePositionType,
                 year_period_id: kpiPositionTypeYearPeriodId,
-                group_id: kpiPositionTypeGroupId,
-                mode: kpiMode,
+                group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                 perspective_id: perspectiveId,
                 objective_id: objectiveId,
                 kpi_id: kpiId,
@@ -456,14 +855,14 @@
             if (checkPercentage(data) > 100) {
                 displayToast('Error', 'Total weight is more than 100%, please check your data.', 'error');
             } else {
-                await storeUpdateKpi(data);
+                await updateKpiPositionType(data);
                 calculateAndDisplayPercentageAndTotalWeight();
             }
             toggleButtonLoader(this, false, { data: '<i class="mdi mdi-check"></i>' });
-        }, 30));
+        }, 300));
 
         $(document).on('click', '.btn-cancel', function() {
-            const id = $(this).attr('data-id');
+            const id = $(this).attr('data-kpi-position-type-id');
             toggleEditButtons(id, true);
             restoreKpiData(id);
         });
@@ -482,7 +881,7 @@
             const data = {
                 position_type: kpiPositionTypePositionType,
                 year_period_id: kpiPositionTypeYearPeriodId,
-                group_id: kpiPositionTypeGroupId,
+                group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                 is_submit: 1
             }
 
@@ -493,15 +892,11 @@
             const data = {
                 position_type: kpiPositionTypePositionType,
                 year_period_id: kpiPositionTypeYearPeriodId,
-                group_id: kpiPositionTypeGroupId,
+                group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                 is_submit: 0
             }
 
             confirmSubmit(data);
-        });
-
-        $(document).on('click', '.btn-generate-kpi', function() {
-            confirmGenerate();
         });
 
         $('#modalPerformance').on('shown.bs.modal', () => {});     
@@ -511,7 +906,7 @@
 
     function checkPercentage(data) {
         let totalWeight = 0;
-        dataKpi.forEach(perspective => {
+        dataKpiPositionType.forEach(perspective => {
             perspective.objective_detail.forEach(objective => {
                 objective.kpi_detail.forEach(kpi => {
                     const weight = (kpi.id === data.id && kpi.weight !== data.weight) ? data.weight : kpi.weight;
@@ -523,12 +918,11 @@
     }
 
     function toggleEditButtons(id, isCancel) {
-        $(`.btn-save[data-id="${id}"]`).toggleClass('d-none', isCancel);
-        $(`.btn-cancel[data-id="${id}"]`).toggleClass('d-none', isCancel);
-        $(`.btn-edit[data-id="${id}"]`).toggleClass('d-none', !isCancel);
-        $(`.btn-delete[data-id="${id}"]`).toggleClass('d-none', !isCancel);
-        $(`#kpiId-${id}`).prop('disabled', isCancel);
-        $(`#weight-${id}`).prop('disabled', isCancel);
+        $(`.btn-save[data-kpi-position-type-id="${id}"]`).toggleClass('d-none', isCancel);
+        $(`.btn-cancel[data-kpi-position-type-id="${id}"]`).toggleClass('d-none', isCancel);
+        $(`.btn-edit[data-kpi-position-type-id="${id}"]`).toggleClass('d-none', !isCancel);
+        $(`.btn-delete[data-kpi-position-type-id="${id}"]`).toggleClass('d-none', !isCancel);
+        $(`#kpiPositionTypeWeight-${id}`).prop('disabled', isCancel);
     }
 
     function restoreKpiData(id) {
@@ -536,8 +930,8 @@
         if (dataBeforeEditIndex !== -1) {
             const dataBeforeEdit = dataKpiBeforeEdit[dataBeforeEditIndex];
             const newOption = new Option(dataBeforeEdit.kpi_name, dataBeforeEdit.kpi_id, true, true);
-            $(`#kpiId-${id}`).append(newOption).trigger('change');
-            $(`#weight-${id}`).val(dataBeforeEdit.weight);
+            $(`#kpiPositionTypeId-${id}`).append(newOption).trigger('change');
+            $(`#kpiPositionTypeWeight-${id}`).val(dataBeforeEdit.weight);
             
             dataKpiBeforeEdit.splice(dataBeforeEditIndex, 1);
         }
@@ -547,20 +941,20 @@
         let totalWeightSum = 0;
         let totalPercentage = 0;
     
-        dataKpi.forEach(perspective => {
+        dataKpiPositionType.forEach(perspective => {
             totalWeightSum += perspective.total_weight_perspective;
             perspective.objective_detail.forEach(objective => {
                 totalPercentage += objective.total_weight;
             });
-            $('#totalWeight-' + perspective.perspective_id).text(perspective.total_weight_perspective + ' %');
+            $('#kpiPositionTypeTotalWeight-' + perspective.perspective_id).text(perspective.total_weight_perspective + ' %');
         });
     
         updatePercentage(totalPercentage);
     }
 
-    async function storeUpdateKpi(data) {
+    async function updateKpiPositionType(data) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/store_update_kpi`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/update_kpi_position_type`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(data).toString()
@@ -579,11 +973,11 @@
             const currData = response.data
             const prevData = data
 
-            updateKpiIdInDataKPI(prevData, currData);
+            updateKpiIdInDataKpi(prevData, currData);
         } else {
             displayToast('Error', response.message, 'error');
             $.each(response.errors, (key, value) => {
-                $(`#error-${key}-${data.id}`).html(value);
+                $(`#error-kpi_position_type_${key}_${data.id}`).html(value);
             });
         }
     }
@@ -611,91 +1005,6 @@
             if (willSubmit) submitKpi(data);
         });
     }
-
-    function confirmGenerate() {
-        swal({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            buttons: {
-                cancel: {
-                    text: "Cancel",
-                    visible: true,
-                    className: "btn btn-danger",
-                    closeModal: true,
-                },
-                confirm: {
-                    text: "OK",
-                    visible: true,
-                    className: "btn btn-primary",
-                    closeModal: true
-                }
-            }
-        }).then(willSubmit => {
-            if (willSubmit) generateKpi();
-        });
-    }
-
-    async function generateKpi() {
-        $('#modalGenerate').modal('show');
-        const data = {
-            position_type: kpiPositionTypePositionType,
-            year_period_id: kpiPositionTypeYearPeriodId,
-            group_id: kpiPositionTypeGroupId,
-        }
-
-        fetch(`${config.siteUrl}mapping/kpi_position_type/generate_kpi`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(data).toString()
-        })
-        .then(response => response.json())
-        .then(response => {
-            $('#successMessages').empty();
-            if (response.status === 'success') {
-                const positions = response.data.positions;
-                const kpis = response.data.kpis;
-                let total = positions.length;
-                let count = 0;
-
-                positions.forEach(position => {
-                    const rowData = new URLSearchParams({
-                        year_period_id: kpiPositionTypeYearPeriodId,
-                        position: JSON.stringify(position),
-                        kpi: JSON.stringify(kpis)
-                    });
-                    fetch(`${config.siteUrl}mapping/kpi_position_type/generate_kpi_row`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: rowData.toString()
-                    })
-                    .then(rowResponse => rowResponse.json())
-                    .then(rowResponse => {
-                        count++;
-                        let progress = (count / total) * 100;
-                        $('#countGenerate').text(count + '/' + total);
-                        $('#progressBar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress.toFixed(2) + '%');
-                        if (rowResponse.status && rowResponse.data.mode === 'success') {
-                            $('#successMessages').append('<div class="text-small alert alert-success">Position: ' + position.nm_jabatan + ' successfully generated</div>');
-                        } else if (rowResponse.status && rowResponse.data.mode === 'warning') {
-                            $('#successMessages').append('<div class="text-small alert alert-warning">Position: ' + position.nm_jabatan + ' already exists.</div>');
-                        } else {
-                            $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Position  ' + position.nm_jabatan + '.</div>');
-                        }
-                    })
-                    .catch(() => {
-                        $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Position  ' + position.nm_jabatan + '.</div>');
-                    });
-                });
-            } else {
-                $('#successMessages').append('<div class="text-small alert alert-danger">Failed to generate data.</div>');
-            }
-        })
-        .catch(() => {
-            $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating data.</div>');
-        });
-    }
-
     async function submitKpi(data) {
         toggleBarLoader(null, true);
         try {
@@ -845,20 +1154,81 @@
                 body: new URLSearchParams({
                     year_period_id: kpiPositionTypeYearPeriodId,
                     position_type: kpiPositionTypePositionType,
-                    group_position_type_id: kpiPositionTypeGroupId,
+                    group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                     group_unit_type_id: $('#groupUnitTypeId').val(),
                 }).toString()
             });
             const result = await response.json();
             if (result.status === 'success') {
+                $('#kpiContainer').empty();
                 initializeData();
                 displayToast('Success', 'Your data has been created', 'success');
             } else {
-                displayToast('Error', 'There was an error creating the data.', 'error');
+                
+                $('#kpiContainer').html(`
+                    <div class="alert alert-fill-danger" role="alert">
+                        <i class="mdi mdi-alert-circle"></i> Oh snap!. KPI for this unit is not available. Please check again and try submitting.
+                    </div>
+                `);
+                // displayToast('Error', 'There was an error creating the data.', 'error');
             }
         } catch (error) {
             displayToast('Error', 'There was an error creating the data.', 'error');
         }
         toggleButtonLoader('#btnCreateKPI', false, { data: 'Create KPI' });
+    }
+
+    
+
+    function updateKpiIdInDataKpi(data) {
+        let updateKpi = null;
+        let id = data.id;
+
+        dataKpiPositionType.forEach(perspective => {
+            perspective.objective_detail.forEach(objective => {
+                objective.kpi_detail.forEach(kpi => {
+                    if (kpi.id === id) {
+                        kpi.weight = parseFloat(data.weight);
+                        updateKpi = kpi;
+                    }
+                });
+                objective.total_weight = objective.kpi_detail.reduce((sum, kpi) => sum + parseFloat(kpi.weight), 0);
+            });
+            perspective.total_weight_perspective = perspective.objective_detail.reduce((sum, objective) => sum + parseFloat(objective.total_weight), 0);
+        });
+
+        setupValueKpiPositionType(updateKpi);
+
+        const dataKpiBeforeEditIndex = dataKpiBeforeEdit.findIndex(item => item.id === id);
+        if (dataKpiBeforeEditIndex !== -1) {
+            dataKpiBeforeEdit.splice(dataKpiBeforeEditIndex, 1);
+        }
+        toggleEditButtons(id, true);
+    }
+
+    function generateUUIDv7() {
+        const now = Date.now();
+        const ts = BigInt(now);
+    
+        // Generate 10 random bytes
+        const randomBytes = new Uint8Array(10);
+        window.crypto.getRandomValues(randomBytes);
+    
+        // Construct the UUID v7
+        const timeHigh = (ts >> 28n) & 0xFFFFFFFFn;
+        const timeMid = (ts >> 12n) & 0xFFFFn;
+        const timeLow = ts & 0xFFFn;
+        const version = 0x7n;
+    
+        const uuid = [
+            timeHigh.toString(16).padStart(8, '0'), // time_high
+            timeMid.toString(16).padStart(4, '0'), // time_mid
+            version.toString(16) + timeLow.toString(16).padStart(3, '0'), // version and time_low
+            (randomBytes[0] & 0x3F | 0x80).toString(16).padStart(2, '0') + // variant
+            randomBytes[1].toString(16).padStart(2, '0'), // random part
+            Array.from(randomBytes.slice(2, 8)).map(b => b.toString(16).padStart(2, '0')).join('') // remaining random part
+        ].join('-');
+    
+        return uuid;
     }
 })(jQuery);

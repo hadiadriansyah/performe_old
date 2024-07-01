@@ -3,9 +3,9 @@
 
     let mode;
     let isSubmitting = false;
-    const kpiPositionYearPeriodId = getkpiPositionYearPeriodIdVal();
-    const kpiPositionPosition = getKpiPositionPositionVal();
-    const kpiPositionGroupId = getKpiPositionGroupIdVal();
+    const kpiPositionTypeYearPeriodId = getkpiPositionTypeYearPeriodIdVal();
+    const kpiPositionTypePositionType = getKpiPositionTypePositionTypeVal();
+    const kpiPositionTypeGroupPositionTypeId = getKpiPositionTypeGroupPositionTypeIdVal();
     let dataKpi = [];
     let dataKpiBeforeEdit = []
     const newItemKPI = {
@@ -41,16 +41,16 @@
         handleFormEvents();
     }
 
-    function getkpiPositionYearPeriodIdVal() {
-        return $('#kpiPositionYearPeriodId').val();
+    function getkpiPositionTypeYearPeriodIdVal() {
+        return $('#kpiPositionTypeYearPeriodId').val();
     }
     
-    function getKpiPositionPositionVal() {
-        return $('#kpiPositionPosition').val();
+    function getKpiPositionTypePositionTypeVal() {
+        return $('#kpiPositionTypePositionType').val();
     }
 
-    function getKpiPositionGroupIdVal() {
-        return $('#kpiPositionGroupId').val();
+    function getKpiPositionTypeGroupPositionTypeIdVal() {
+        return $('#kpiPositionTypeGroupPositionTypeId').val();
     }
 
     function setupPercentage() {
@@ -66,30 +66,42 @@
     }
 
     async function initializeData() {
-        if (kpiPositionPosition && kpiPositionYearPeriodId && kpiPositionGroupId) {
+        const kpiPositionType = await getgetKpiPositionType();
+        if (kpiPositionType && kpiPositionType.length > 0) {
+            $('#createKpi').addClass('d-none');
+            // const kpiUnitType = 
+        } else {
+            $('#createKpi').removeClass('d-none');
+        }
+    }
+
+    async function getgetKpiPositionType() {
+        if (kpiPositionTypePositionType && kpiPositionTypeYearPeriodId && kpiPositionTypeGroupPositionTypeId) {
             try {
-                const response = await fetch(`${config.siteUrl}mapping/kpi_position/get_kpi_position`, {
+                const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_kpi_position_type`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
-                        position: kpiPositionPosition,
-                        year_period_id: kpiPositionYearPeriodId,
-                        group_id: kpiPositionGroupId,
+                        position_type: kpiPositionTypePositionType,
+                        year_period_id: kpiPositionTypeYearPeriodId,
+                        group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                     }).toString()
                 });
                 const result = await response.json();
                 const data = result.data;
-                if (data.length > 0) {
-                    $('#createKPI').addClass('d-none');
-                    dataKpi = await processKpiData(data);
-                    const totalWeightSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
-                    updatePercentage(totalWeightSum);
-                    renderKPI();
-                } else {
-                    $('#createKPI').removeClass('d-none');
-                }
+                return data;
+                // if (data.length > 0) {
+                //     $('#createKpi').addClass('d-none');
+                    // dataKpi = await processKpiData(data);
+                    // const totalWeightSum = dataKpi.reduce((sum, item) => sum + parseFloat(item.total_weight_perspective), 0);
+                    // updatePercentage(totalWeightSum);
+                    // renderKPI();
+                // } else {
+                //     $('#createKpi').removeClass('d-none');
+                // }
             } catch (error) {
-                displayToast('Error', 'Error fetching KPI', 'error');
+                return false;
+                // displayToast('Error', 'Error fetching KPI', 'error');
             }
         }
     }
@@ -292,7 +304,7 @@
 
     async function getKpiById(id) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position/get_kpi_by_id/${id}`, { method: 'GET' });
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/get_kpi_by_id/${id}`, { method: 'GET' });
             const result = await response.json();
             const data = result.data;
             return data;
@@ -309,24 +321,32 @@
             })
         })
 
+        
+
         $('#groupUnitTypeId').each(function () {
             $(this).select2({
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_position/get_kpi_unit_type_groups_options`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_kpi_unit_type_groups_options`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -338,20 +358,26 @@
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_position/get_perspective_options_by_year_period_id`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_perspective_options_by_year_period_id`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
                         q: params.term || '',
                         page: params.page || 1,
-                        year_period_id: kpiPositionYearPeriodId
+                        year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -363,20 +389,26 @@
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_position/get_objective_options_by_year_period_id`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_objective_options_by_year_period_id`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
                         q: params.term || '',
                         page: params.page || 1,
-                        year_period_id: kpiPositionYearPeriodId
+                        year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -388,20 +420,26 @@
                 theme: 'bootstrap',
                 dropdownParent: $(this).parent(),
                 ajax: {
-                    url: `${config.siteUrl}mapping/kpi_position/get_kpi_options_by_year_period_id`,
+                    url: `${config.siteUrl}mapping/kpi_position_type/get_kpi_options_by_year_period_id`,
                     dataType: 'json',
                     delay: 250,
                     data: params => ({
                         q: params.term || '',
                         page: params.page || 1,
-                        year_period_id: kpiPositionYearPeriodId
+                        year_period_id: kpiPositionTypeYearPeriodId
                     }),
-                    processResults: (data, params) => ({
-                        results: data.data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            data.data.items.unshift({ id: '', text: '- Choose -' });
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -440,9 +478,9 @@
             
             const data = {
                 id: id,
-                position: kpiPositionPosition,
-                year_period_id: kpiPositionYearPeriodId,
-                group_id: kpiPositionGroupId,
+                position_type: kpiPositionTypePositionType,
+                year_period_id: kpiPositionTypeYearPeriodId,
+                group_id: kpiPositionTypeGroupPositionTypeId,
                 mode: kpiMode,
                 perspective_id: perspectiveId,
                 objective_id: objectiveId,
@@ -458,7 +496,7 @@
                 calculateAndDisplayPercentageAndTotalWeight();
             }
             toggleButtonLoader(this, false, { data: '<i class="mdi mdi-check"></i>' });
-        }, 30));
+        }, 300));
 
         $(document).on('click', '.btn-cancel', function() {
             const id = $(this).attr('data-id');
@@ -478,9 +516,9 @@
 
         $(document).on('click', '.btn-submit-kpi', function() {
             const data = {
-                position: kpiPositionPosition,
-                year_period_id: kpiPositionYearPeriodId,
-                group_position_id: kpiPositionGroupId,
+                position_type: kpiPositionTypePositionType,
+                year_period_id: kpiPositionTypeYearPeriodId,
+                group_id: kpiPositionTypeGroupPositionTypeId,
                 is_submit: 1
             }
 
@@ -489,9 +527,9 @@
 
         $(document).on('click', '.btn-cancel-submit-kpi', function() {
             const data = {
-                position: kpiPositionPosition,
-                year_period_id: kpiPositionYearPeriodId,
-                group_position_id: kpiPositionGroupId,
+                position_type: kpiPositionTypePositionType,
+                year_period_id: kpiPositionTypeYearPeriodId,
+                group_id: kpiPositionTypeGroupPositionTypeId,
                 is_submit: 0
             }
 
@@ -558,7 +596,7 @@
 
     async function storeUpdateKpi(data) {
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position/store_update_kpi`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/store_update_kpi`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(data).toString()
@@ -637,12 +675,12 @@
     async function generateKpi() {
         $('#modalGenerate').modal('show');
         const data = {
-            position: kpiPositionPosition,
-            year_period_id: kpiPositionYearPeriodId,
-            group_id: kpiPositionGroupId,
+            position_type: kpiPositionTypePositionType,
+            year_period_id: kpiPositionTypeYearPeriodId,
+            group_id: kpiPositionTypeGroupPositionTypeId,
         }
 
-        fetch(`${config.siteUrl}mapping/kpi_position/generate_kpi`, {
+        fetch(`${config.siteUrl}mapping/kpi_position_type/generate_kpi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(data).toString()
@@ -651,18 +689,18 @@
         .then(response => {
             $('#successMessages').empty();
             if (response.status === 'success') {
-                const units = response.data.units;
+                const positions = response.data.positions;
                 const kpis = response.data.kpis;
-                let total = units.length;
+                let total = positions.length;
                 let count = 0;
 
-                units.forEach(unit => {
+                positions.forEach(position => {
                     const rowData = new URLSearchParams({
-                        year_period_id: kpiPositionYearPeriodId,
-                        unit: JSON.stringify(unit),
+                        year_period_id: kpiPositionTypeYearPeriodId,
+                        position: JSON.stringify(position),
                         kpi: JSON.stringify(kpis)
                     });
-                    fetch(`${config.siteUrl}mapping/kpi_position/generate_kpi_row`, {
+                    fetch(`${config.siteUrl}mapping/kpi_position_type/generate_kpi_row`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: rowData.toString()
@@ -674,15 +712,15 @@
                         $('#countGenerate').text(count + '/' + total);
                         $('#progressBar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress.toFixed(2) + '%');
                         if (rowResponse.status && rowResponse.data.mode === 'success') {
-                            $('#successMessages').append('<div class="text-small alert alert-success">Unit: ' + unit.nm_unit_kerja + ' successfully generated</div>');
+                            $('#successMessages').append('<div class="text-small alert alert-success">Position: ' + position.nm_jabatan + ' successfully generated</div>');
                         } else if (rowResponse.status && rowResponse.data.mode === 'warning') {
-                            $('#successMessages').append('<div class="text-small alert alert-warning">Unit: ' + unit.nm_unit_kerja + ' already exists.</div>');
+                            $('#successMessages').append('<div class="text-small alert alert-warning">Position: ' + position.nm_jabatan + ' already exists.</div>');
                         } else {
-                            $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Unit  ' + unit.nm_unit_kerja + '.</div>');
+                            $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Position  ' + position.nm_jabatan + '.</div>');
                         }
                     })
                     .catch(() => {
-                        $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Unit  ' + unit.nm_unit_kerja + '.</div>');
+                        $('#successMessages').append('<div class="text-small alert alert-danger">An error occurred while generating row for Position  ' + position.nm_jabatan + '.</div>');
                     });
                 });
             } else {
@@ -697,7 +735,7 @@
     async function submitKpi(data) {
         toggleBarLoader(null, true);
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position/submit_kpi`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/submit_kpi`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(data).toString()
@@ -775,7 +813,7 @@
                 
                 $(`tr:has(button[data-id="${id}"])`).remove();
             } else {
-                const response = await fetch(`${config.siteUrl}mapping/kpi_position/delete`, {
+                const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/delete`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ id }).toString()
@@ -833,17 +871,17 @@
 
         return isValid;
     }
-
+    
     async function createKpi() {
         toggleButtonLoader('#btnCreateKPI', true, { data: '' });
         try {
-            const response = await fetch(`${config.siteUrl}mapping/kpi_position/create_kpi`, {
+            const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/create_kpi`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    year_period_id: kpiPositionYearPeriodId,
-                    position: kpiPositionPosition,
-                    group_position_id: kpiPositionGroupId,
+                    year_period_id: kpiPositionTypeYearPeriodId,
+                    position_type: kpiPositionTypePositionType,
+                    group_position_type_id: kpiPositionTypeGroupPositionTypeId,
                     group_unit_type_id: $('#groupUnitTypeId').val(),
                 }).toString()
             });
@@ -852,7 +890,13 @@
                 initializeData();
                 displayToast('Success', 'Your data has been created', 'success');
             } else {
-                displayToast('Error', 'There was an error creating the data.', 'error');
+                
+                $('#kpiContainer').html(`
+                    <div class="alert alert-fill-danger" role="alert">
+                        <i class="mdi mdi-alert-circle"></i> Oh snap!. KPI for this unit is not available. Please check again and try submitting.
+                    </div>
+                `);
+                // displayToast('Error', 'There was an error creating the data.', 'error');
             }
         } catch (error) {
             displayToast('Error', 'There was an error creating the data.', 'error');

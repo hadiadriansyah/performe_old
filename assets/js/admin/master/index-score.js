@@ -108,12 +108,22 @@
                         q: params.term || '',
                         page: params.page || 1
                     }),
-                    processResults: (data, params) => ({
-                        results: data.items,
-                        pagination: {
-                            more: (params.page * 10) < data.total_count
+                    processResults: (data, params) => {
+                        params.page = params.page || 1;
+                        if (params.page === 1) {
+                            if ($(this).attr('id') === 'filterYearPeriodId') {
+                                data.data.items.unshift({ id: 'all', text: 'All' });
+                            } else {
+                                data.data.items.unshift({ id: '', text: '- Choose -' });
+                            }
                         }
-                    }),
+                        return {
+                            results: data.data.items,
+                            pagination: {
+                                more: (params.page * 10) < data.data.total_count
+                            }
+                        };
+                    },
                     cache: true
                 },
                 minimumInputLength: 0
@@ -292,10 +302,10 @@
     }
 
     $('#formIndexScore').on('reset', function() {
-        $('.error-message').html('');
-        $('.select2-js-basic').val(null).trigger('change');
+        $('#formIndexScore').find('.error-message').html('');
+        $('#formIndexScore').find('.select2-js-basic').val(null).trigger('change');
         const newOption = new Option('- Choose -', '', true, true);
-        $('.select2-js-server').append(newOption).trigger('change');
+        $('#formIndexScore').find('.select2-js-server').append(newOption).trigger('change');
     });
 
 })(jQuery);

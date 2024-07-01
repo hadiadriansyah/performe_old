@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH . 'interface/goals_settings/Kpi_unit_repository_interface.php');
 
+#[\AllowDynamicProperties]
 class Kpi_unit_repository implements Kpi_unit_repository_interface {
     protected $model;
     protected $year_period_model;
@@ -28,6 +29,16 @@ class Kpi_unit_repository implements Kpi_unit_repository_interface {
         $this->perspective_model = $CI->Perspective_model;
         $CI->load->model('Objective_model');
         $this->objective_model = $CI->Objective_model;
+    }
+
+    #####
+
+    public function exists(array $data) {
+        return $this->model->exists($data);
+    }
+
+    public function unique(array $data) {
+        return $this->model->unique($data);
     }
 
     #####
@@ -66,6 +77,10 @@ class Kpi_unit_repository implements Kpi_unit_repository_interface {
         return $this->model->get_kpi_unit($data);
     }
 
+    public function get_kpi_unit_target_by_unit_id($data) {
+        return $this->model->get_kpi_unit_target_by_unit_id($data);
+    }
+
     public function get_kpi_by_id($id) {
         return $this->kpi_model->get_by_id($id);
     }
@@ -79,11 +94,11 @@ class Kpi_unit_repository implements Kpi_unit_repository_interface {
         return $this->kpi_unit_target_model->get_by_kpi_unit_id($id);
     }
 
-    public function get_year_period_options($search = '', $page = 1) {
+    public function get_year_period_options($search, $page) {
         return $this->year_period_model->get_options($search, $page);
     }
 
-    public function get_unit_options($search = '', $page = 1) {
+    public function get_unit_options($search, $page) {
         return $this->unit_model->get_options($search, $page);
     }
 
@@ -91,11 +106,11 @@ class Kpi_unit_repository implements Kpi_unit_repository_interface {
         return $this->unit_model->get_options_by_unit_id($data);
     }
 
-    public function get_perspective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_perspective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->perspective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 
-    public function get_objective_options_by_year_period_id($search = '', $page = 1, $year_period_id) {
+    public function get_objective_options_by_year_period_id($search, $page, $year_period_id) {
         return $this->objective_model->get_options_by_year_period_id($search, $page, $year_period_id);
     }
 }

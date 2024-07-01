@@ -311,7 +311,7 @@ class Unit_performance_appraisal extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_kpi_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->kpi], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -352,7 +352,7 @@ class Unit_performance_appraisal extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_year_period_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->year_period], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -363,7 +363,7 @@ class Unit_performance_appraisal extends CI_Controller {
         $page = $this->input->get('page');
         $result = $this->repository->get_unit_options($search, $page);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->nm_unit_kerja], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -375,7 +375,7 @@ class Unit_performance_appraisal extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_perspective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->perspective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);
@@ -387,7 +387,7 @@ class Unit_performance_appraisal extends CI_Controller {
         $year_period_id = $this->input->get('year_period_id');
         $result = $this->repository->get_objective_options_by_year_period_id($search, $page, $year_period_id);
         $data = [
-            'items' => array_merge([['id' => '', 'text' => '- Choose -']], array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data'])),
+            'items' => array_map(fn($item) => ['id' => $item->id, 'text' => $item->objective], $result['data']),
             'total_count' => $result['total']
         ];
         $this->json_response->success('Data successfully fetched.', $data);

@@ -16,8 +16,7 @@
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <form id="formMapping">
-                    <p class="card-description"> Mapping </p>
+                <form id="formMapping">                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group row">
@@ -54,10 +53,10 @@
                             <div class="form-group row">
                                 <label class="col-sm-4 col-md-4 col-form-label">Group Unit</label>
                                 <div class="col-sm-4 col-md-5 px-2">
-                                    <select class="form-select select2-js-basic" id="groupId" name="group_id">
+                                    <select class="form-select select2-js-basic" id="groupUnitTypeId" name="group_unit_type_id">
                                         <option value=""> - Choose - </option>
                                     </select>
-                                    <div class="error-message text-small text-danger mt-1" id="error-group_id"></div>
+                                    <div class="error-message text-small text-danger mt-1" id="error-group_unit_type_id"></div>
                                 </div>
                                 <div class="col-sm-4 col-md-3">
                                     <button id="btnModalAddGroup" class="btn btn-inverse-success btn-rounded btn-icon mb-1" type="button" data-bs-toggle="modal" data-bs-target="#modalGroup" data-mode="modalAddGroup"> <i class="mdi mdi-plus"></i> </button>
@@ -82,7 +81,7 @@
                     </div>
                 </form>
                 <div class="row">
-                    <div id="groupUnitContainer" class="col-sm-12 col-md-10 offset-md-2 text-center d-none">
+                    <div id="groupUnitContainer" class="col-sm-12 col-md-10 offset-md-2 mt-sm-5 text-center d-none">
                         <h5>Unit List</h5>
                         <div class="row">
                             <div class="col-12 list-wrapper">

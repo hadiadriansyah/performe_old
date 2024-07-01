@@ -2,13 +2,13 @@
     <h3 class="page-title">
     <span class="page-title-icon bg-gradient-primary text-white me-2">
         <i class="mdi mdi-chart-bar"></i>
-    </span> KPI Unit Type
+    </span> KPI Position Type
     </h3>
     <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#">Mapping</a></li>
         <li class="breadcrumb-item"><a href="#">KPI</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Unit Type</li>
+        <li class="breadcrumb-item active" aria-current="page">Position Type</li>
     </ol>
     </nav>
 </div>
@@ -16,8 +16,7 @@
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <form id="formMapping">
-                    <p class="card-description"> Mapping </p>
+                <form id="formMapping">                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group row">
@@ -35,7 +34,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group row">
-                                <label class="col-sm-4 col-form-label">Position</label>
+                                <label class="col-sm-4 col-form-label">Position Type</label>
                                 <div class="col-sm-8 px-2">
                                     <select class="form-select select2-js-server" id="positionType" name="position_type">
                                         <option value=""> - Choose - </option>
@@ -49,14 +48,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group row">
-                                <label class="col-sm-4 col-form-label">Group Position</label>
-                                <div class="col-sm-5 px-2">
-                                    <select class="form-select select2-js-basic" id="groupId" name="group_id">
+                                <label class="col-sm-4 col-md-4 col-form-label">Group Position</label>
+                                <div class="col-sm-4 col-md-5 px-2">
+                                    <select class="form-select select2-js-basic" id="groupPositionTypeId" name="group_position_type_id">
                                         <option value=""> - Choose - </option>
                                     </select>
-                                    <div class="error-message text-small text-danger mt-1" id="error-group_id"></div>
+                                    <div class="error-message text-small text-danger mt-1" id="error-group_position_type_id"></div>
                                 </div>
-                                <div class="col-sm-3">
+                                <div class="col-sm-4 col-md-3">
                                     <button id="btnModalAddGroup" class="btn btn-inverse-success btn-rounded btn-icon mb-1" type="button" data-bs-toggle="modal" data-bs-target="#modalGroup" data-mode="modalAddGroup"> <i class="mdi mdi-plus"></i> </button>
 
                                     <button id="btnModalEditGroup" class="btn btn-inverse-warning btn-rounded btn-icon mb-1 d-none" type="button" data-bs-toggle="modal" data-bs-target="#modalGroup" data-mode="modalEditGroup"> <i class="mdi mdi-file-check"></i> </button>
@@ -79,7 +78,7 @@
                     </div>
                 </form>
                 <div class="row">
-                    <div id="groupTypeContainer" class="col-sm-12 col-md-10 offset-md-2 text-center d-none">
+                    <div id="groupPositionContainer" class="col-sm-12 col-md-10 offset-md-2 mt-sm-5 text-center d-none">
                         <h5>Position List</h5>
                         <div class="row">
                             <div class="col-12 list-wrapper">
@@ -115,7 +114,7 @@
                 <form id="formGroup">
                     <input type="hidden" class="form-control" id="id" name="id" placeholder="">
                     <div class="form-group row">
-                        <label for="Group" class="col-sm-3 col-form-label">Group</label>
+                        <label for="groupType" class="col-sm-3 col-form-label">Group Type</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="groupType" name="group_type" placeholder="Group Type Name">
                             <div class="error-message text-small text-danger mt-1" id="error-group_type"></div>

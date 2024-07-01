@@ -13,5 +13,5 @@ interface Objective_repository_interface
     public function delete($id);
     #####
     public function get_by_id($id);
-    public function get_year_period_options($search = '', $page = 1);
+    public function get_year_period_options($search, $page);
 }

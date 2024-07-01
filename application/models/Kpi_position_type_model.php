@@ -4,6 +4,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Kpi_position_type_model extends CI_Model {
     protected $table = 'npm_kpi_position_types';
 
+    public function get_by_id($id) {
+        $this->db->select($this->table . '.*, npm_perspectives.perspective, npm_objectives.objective');
+        $this->db->from($this->table);
+        $this->db->join('npm_perspectives', 'npm_perspectives.id = ' . $this->table . '.perspective_id', 'left');
+        $this->db->join('npm_objectives', 'npm_objectives.id = ' . $this->table . '.objective_id', 'left');
+        $this->db->where($this->table . '.id', $id);
+        return $this->db->get()->row_array();
+    }
+
     public function get_kpi_position_type($data) {
         $this->db->select($this->table . '.*, npm_perspectives.perspective, npm_objectives.objective');
         $this->db->from($this->table);
@@ -11,33 +20,41 @@ class Kpi_position_type_model extends CI_Model {
         $this->db->join('npm_objectives', 'npm_objectives.id = ' . $this->table . '.objective_id', 'left');
         $this->db->where($this->table . '.position_type', $data['position_type']);
         $this->db->where($this->table . '.year_period_id', $data['year_period_id']);
-        $this->db->where($this->table . '.group_id', $data['group_id']);
+        $this->db->where($this->table . '.group_position_type_id', $data['group_position_type_id']);
         return $this->db->get()->result();
     }
 
     public function get_by_group_position_type_id($data) {
-        $this->db->select('*');
+        $this->db->select($this->table . '.*, npm_perspectives.perspective, npm_objectives.objective');
         $this->db->from($this->table);
-        $this->db->where('is_submit', 1);
-        $this->db->where('year_period_id', $data['year_period_id']);
-        $this->db->where('group_id', $data['group_position_type_id']);
+        $this->db->join('npm_perspectives', 'npm_perspectives.id = ' . $this->table . '.perspective_id', 'left');
+        $this->db->join('npm_objectives', 'npm_objectives.id = ' . $this->table . '.objective_id', 'left');
+        $this->db->where($this->table . '.is_submit', 1);
+        $this->db->where($this->table . '.year_period_id', $data['year_period_id']);
+        $this->db->where($this->table . '.group_position_type_id', $data['group_position_type_id']);
         return $this->db->get()->result();
     }
 
     public function store($data) {
-        $query = $this->db->query("INSERT INTO {$this->table} (".implode(", ", array_keys($data)).") VALUES (".implode(", ", array_map(array($this->db, 'escape'), array_values($data))).") RETURNING *");
-        return $query->row_array();
+        $query = $this->db->query("INSERT INTO {$this->table} (".implode(", ", array_keys($data)).") VALUES (".implode(", ", array_map(array($this->db, 'escape'), array_values($data))).") RETURNING id");
+        $id = $query->row_array()['id'];
+        return $this->get_by_id($id);
     }
 
     public function update(array $data) {
         $query = $this->db->query("UPDATE {$this->table} SET ".implode(", ", array_map(function($key, $value) {
             return "$key = ".$this->db->escape($value);
-        }, array_keys($data), $data))." WHERE id = ".$this->db->escape($data['id'])." RETURNING *");
-        return $query->row_array();
+        }, array_keys($data), $data))." WHERE id = ".$this->db->escape($data['id'])." RETURNING id");
+        $id = $query->row_array()['id'];
+        return $this->get_by_id($id);
     }
 
     public function delete($id) {
         return $this->db->delete($this->table, ['id' => $id]);
+    }
+
+    public function delete_by_data($data) {
+        return $this->db->delete($this->table, $data);
     }
 
     public function submit_kpi(array $data)
@@ -46,7 +63,7 @@ class Kpi_position_type_model extends CI_Model {
 
         $this->db->where('position_type', $data['position_type']);
         $this->db->where('year_period_id', $data['year_period_id']);
-        $this->db->where('group_id', $data['group_id']);
+        $this->db->where('group_position_type_id', $data['group_position_type_id']);
         
         return $this->db->update($this->table);
     }
