@@ -1,6 +1,8 @@
 (function($) {
     'use strict';
 
+    let goalsSettingsData = {};
+
     $(initializePage);
 
     function initializePage() {
@@ -128,15 +130,95 @@
         const yearPeriodId = $('#yearPeriodId').val();
         const employeeId = $('#employeeId').val();
 
+        goalsSettingsData = {};
+        $('#kpiIndividualContainer').addClass('d-none');
+
         if (yearPeriodId && employeeId) {
-            const goalSettings = await getGoalSettings(yearPeriodId, employeeId);
-            console.log(goalSettings);
+            const goalsSettings = await getGoalsSettings(yearPeriodId, employeeId);
+            $('#goalsSettingsContainer tbody').empty();
+            if (goalsSettings) {
+                goalsSettings.forEach((gs, index) => {
+                    goalsSettingsData[gs.id] = gs;
+                    $('#goalsSettingsContainer tbody').append(`
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${gs.position_name}</td>
+                            <td>${gs.unit_name}</td>
+                            <td>${gs.placement_unit_name}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-gradient-success btn-icon-text btn-view-kpi" 
+                                    data-id="${gs.id}"
+                                    data-bs-toggle="tooltip" 
+                                    data-placement="left" 
+                                    title="View">
+                                    <i class="mdi mdi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                $('.btn-view-kpi').on('click', function() {
+                    const id = $(this).attr('data-id');
+                    kpiData(id);
+                });
+            }
         }
     }
 
-    async function getGoalSettings(yearPeriodId, employeeId) {
+    async function kpiData(id) {
+        $('#kpiIndividualContainer').removeClass('d-none');
+        const gsData = goalsSettingsData[id];
+        $('#position').val(gsData.position_name);
+
+        const kpiUnit = await getKpiUnit(gsData.placement_unit_id, gsData.year_period_id);
+        console.log(kpiUnit);
+
+        const kpiIndividual = await getKpiIndividualByPaId(gsData.id);
+        console.log(kpiIndividual);
+    }
+
+    async function getKpiUnit(unitId, yearPeriodId) {
+        if (unitId && yearPeriodId) {
+            try {
+                const response = await fetch(`${config.siteUrl}goals_settings/kpi_individual/get_kpi_unit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        unit_id: unitId,
+                        year_period_id: yearPeriodId,
+                    }).toString()
+                });
+                const result = await response.json();
+                const data = result.data;
+                return data;
+            } catch (error) {
+                return false;
+            }
+        }
+    }
+
+    async function getKpiIndividualByPaId(id) {
+        if (id) {
+            try {
+                const response = await fetch(`${config.siteUrl}goals_settings/kpi_individual/get_kpi_individual_by_pa_id`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        id: id,
+                    }).toString()
+                });
+                const result = await response.json();
+                const data = result.data;
+                return data;
+            } catch (error) {
+                return false;
+            }
+        }
+    }
+
+    async function getGoalsSettings(yearPeriodId, employeeId) {
         try {
-            
             const response = await fetch(`${config.siteUrl}goals_settings/kpi_individual/get_goals_settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -146,9 +228,12 @@
                 }).toString()
             });
             const result = await response.json();
-            return result;
+            const data = result.data
+            return data;
         } catch (error) {
             return false;
         }
     }
+
+
 })(jQuery);

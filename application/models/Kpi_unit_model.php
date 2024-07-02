@@ -3,8 +3,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Kpi_unit_model extends CI_Model {
     protected $table = 'npm_kpi_units';
-
-    public function get_kpi_unit($data)
+    
+    public function get_kpi_unit($data, $is_submit = false)
     {
         $this->db->select($this->table . '.*, npm_perspectives.perspective, npm_objectives.objective, npm_kpi_unit_target.id as target_id, npm_kpi_unit_actual.id as actual_id');
         $this->db->from($this->table);
@@ -12,6 +12,9 @@ class Kpi_unit_model extends CI_Model {
         $this->db->join('npm_objectives', 'npm_objectives.id = ' . $this->table . '.objective_id', 'left');
         $this->db->join('npm_kpi_unit_target', 'npm_kpi_unit_target.kpi_unit_id = ' . $this->table . '.id', 'left');
         $this->db->join('npm_kpi_unit_actual', 'npm_kpi_unit_actual.kpi_unit_id = ' . $this->table . '.id', 'left');
+        if ($is_submit) {
+            $this->db->where($this->table . '.is_submit_target', 1);
+        }
         $this->db->where($this->table . '.unit_id', $data['unit_id']);
         $this->db->where($this->table . '.year_period_id', $data['year_period_id']);
         return $this->db->get()->result();

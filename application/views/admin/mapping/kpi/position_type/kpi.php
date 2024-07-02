@@ -22,7 +22,6 @@
                             <h4 class="mb-0">Position KPIs</h4>
                             <button type="button" class="btn btn-light btn-submit-kpi is-submit-kpi d-none" disabled>Submit</button>
                             <div class="btn-cancel-submit-kpi is-submit-kpi d-none">
-
                                 <?php if ($is_admin == SYSTEM_ADMIN): ?>
                                     <button type="button" class="btn btn-light btn-cancel-submit-kpi">Cancel Submit</button>
                                 <?php endif; ?>

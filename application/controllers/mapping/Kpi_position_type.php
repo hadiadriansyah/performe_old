@@ -359,8 +359,7 @@ class Kpi_position_type extends CI_Controller {
                         'created_by' => $this->bc->get_global()['vendor_id'],
                         'updated_by' => $this->bc->get_global()['vendor_id'],
                         'group_position_type_id' => $data['group_position_type_id'],
-                        'group_unit_type_id' => $data['group_unit_type_id'],
-                        'kpi_unit_type_id' => $item->id
+                        'group_unit_type_id' => $data['group_unit_type_id']
                     ];
                     $this->repository->store($store);
                 }
@@ -395,7 +394,6 @@ class Kpi_position_type extends CI_Controller {
             'updated_by' => $this->bc->get_global()['vendor_id'],
             'group_position_type_id' => $input_data['group_position_type_id'],
             'group_unit_type_id' => $input_data['group_unit_type_id'],
-            'kpi_unit_type_id' => $input_data['kpi_unit_type_id']
         ];
         $store = $this->repository->store($store);
         $message = $store ? 'KPI successfully added.' : 'Failed to add KPI.';

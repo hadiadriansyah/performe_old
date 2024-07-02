@@ -211,7 +211,6 @@
                 position_type: item.position_type,
                 group_position_type_id: item.group_position_type_id,
                 group_unit_type_id: item.group_unit_type_id,
-                kpi_unit_type_id: item.kpi_unit_type_id,
                 weight: item.weight,
                 score: item.score,
                 mode: null
@@ -270,10 +269,13 @@
                 let no = 1;
                 objective.kpi_detail.forEach(kpi => {
                     kpis.push(kpi);
-                    
                     const isChecked = dataKpiPositionType.some(perspective => 
                         perspective.objective_detail.some(objective => 
-                            objective.kpi_detail.some(posType => posType.kpi_unit_type_id === kpi.id)
+                            objective.kpi_detail.some(posType => {
+                                return posType.kpi_id === kpi.kpi_id && 
+                                               posType.perspective_id === kpi.perspective_id && 
+                                               posType.objective_id === kpi.objective_id;
+                            })
                         )
                     ) ? 'checked' : '';
                     html += `
@@ -285,10 +287,10 @@
                                 </div>
                             </td>
                             <td>
-                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiUnitTypeId-${kpi.id}" name="kpi_unit_type_id_${kpi.id}" data-kpi-unit-type-id="${kpi.id}" disabled>
+                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiUnitTypeKpiId-${kpi.id}" name="kpi_unit_type_kpi_id_${kpi.id}" data-kpi-unit-type-kpi-id="${kpi.id}" disabled>
                                     <option value="">- Choose -</option>
                                 </select>
-                                <div class="error-message text-small text-danger mt-1" id="error-kpi_unit_type_id_${kpi.id}"></div>
+                                <div class="error-message text-small text-danger mt-1" id="error-kpi_unit_type_kpi_id_${kpi.id}"></div>
                             </td>
                             <td>
                                 <input type="text" class="form-control" id="kpiUnitTypeWeight-${kpi.id}" name="kpi_unit_type_weight_${kpi.id}" value="${kpi.weight}" disabled>
@@ -329,9 +331,9 @@
     }
     
     function setupCheckboxEventHandlers() {
-        $('.checkbox').on('change', _.debounce(async function() {
-            const kpiUnitTypeId = $(this).val();
+        $('.checkbox').on('change', async function() {
             toggleBarLoader(this, true);
+            const kpiUnitTypeId = $(this).val();
             if ($(this).is(':checked')) {
                 await insertKpiPositionType(kpiUnitTypeId, this);
                 await new Promise(resolve => setTimeout(resolve, 300));
@@ -340,7 +342,7 @@
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
             toggleBarLoader(this, false);
-        }, 300));
+        });
     }
 
     async function insertKpiPositionType(kpiUnitTypeId, checkbox) {
@@ -356,7 +358,6 @@
             is_submit: 0,
             group_position_type_id: kpiPositionTypeGroupPositionTypeId,
             group_unit_type_id: kpiUnitType.group_unit_type_id,
-            kpi_unit_type_id: kpiUnitType.id,
         }
         try {
             const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/insert_kpi_position_type`, {
@@ -381,11 +382,13 @@
     async function deleteKpiPositionType(kpiUnitTypeId, checkbox) {
         const kpiUnitType = kpiUnitTypes.find(unitType => unitType.id === kpiUnitTypeId);
         const data = {
-            year_period_id: kpiPositionTypeYearPeriodId,
             position_type: kpiPositionTypePositionType,
+            year_period_id: kpiPositionTypeYearPeriodId,
+            perspective_id: kpiUnitType.perspective_id,
+            objective_id: kpiUnitType.objective_id,
+            kpi_id: kpiUnitType.kpi_id,
             group_position_type_id: kpiPositionTypeGroupPositionTypeId,
             group_unit_type_id: kpiUnitType.group_unit_type_id,
-            kpi_unit_type_id: kpiUnitType.id,
         }
         try {
             const response = await fetch(`${config.siteUrl}mapping/kpi_position_type/delete_kpi_position_type`, {
@@ -438,7 +441,6 @@
                                     position_type: data.position_type,
                                     group_position_type_id: data.group_position_type_id,
                                     group_unit_type_id: data.group_unit_type_id,
-                                    kpi_unit_type_id: data.kpi_unit_type_id,
                                     weight: parseFloat(data.weight),
                                     score: 0,
                                     mode: ''
@@ -468,7 +470,6 @@
                             position_type: data.position_type,
                             group_position_type_id: data.group_position_type_id,
                             group_unit_type_id: data.group_unit_type_id,
-                            kpi_unit_type_id: data.kpi_unit_type_id,
                             weight: parseFloat(data.weight),
                             score: 0,
                             mode: ''
@@ -490,7 +491,6 @@
                                 position_type: data.position_type,
                                 group_position_type_id: data.group_position_type_id,
                                 group_unit_type_id: data.group_unit_type_id,
-                                kpi_unit_type_id: data.kpi_unit_type_id,
                                 weight: parseFloat(data.weight),
                                 score: 0,
                                 mode: ''
@@ -506,9 +506,11 @@
                 perspective.objective_detail = perspective.objective_detail.filter(objective => {
                     objective.kpi_detail = objective.kpi_detail.filter(kpi => 
                         !(kpi.position_type === data.position_type &&
-                          kpi.group_position_type_id === data.group_position_type_id &&
-                          kpi.group_unit_type_id === data.group_unit_type_id &&
-                          kpi.kpi_unit_type_id === data.kpi_unit_type_id)
+                            kpi.kpi_id === data.kpi_id &&
+                            kpi.perspective_id === data.perspective_id &&
+                            kpi.objective_id === data.objective_id &&
+                            kpi.group_position_type_id === data.group_position_type_id &&
+                            kpi.group_unit_type_id === data.group_unit_type_id)
                     );
                     return objective.kpi_detail.length > 0;
                 });
@@ -534,7 +536,7 @@
                 $(`#kpiUnitTypePolarization-${kpi.id}`).text(data.polarization);
                 
                 const newOption = new Option(data.kpi, data.id, true, true);
-                $(`#kpiUnitTypeId-${kpi.id}`).append(newOption).trigger('change');
+                $(`#kpiUnitTypeKpiId-${kpi.id}`).append(newOption).trigger('change');
             }
 
         }
@@ -603,10 +605,10 @@
                                 </button>
                             </td>
                             <td>
-                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiPositionTypeId-${kpi.id}" name="kpi_position_type_id_${kpi.id}" data-kpi-position-type-id="${kpi.id}" disabled>
+                                <select type="text" class="form-control select2-js-kpi" style="width: 200px" id="kpiPositionTypeKpiId-${kpi.id}" name="kpi_position_type_kpi_id_${kpi.id}" data-kpi-position-type-kpi-id="${kpi.id}" disabled>
                                     <option value="">- Choose -</option>
                                 </select>
-                                <div class="error-message text-small text-danger mt-1" id="error-kpi_position_type_id_${kpi.id}"></div>
+                                <div class="error-message text-small text-danger mt-1" id="error-kpi_position_type_kpi_id_${kpi.id}"></div>
                             </td>
                             <td>
                                 <input type="text" class="form-control" id="kpiPositionTypeWeight-${kpi.id}" name="kpi_position_type_weight_${kpi.id}" value="${kpi.weight}" disabled>
@@ -663,7 +665,7 @@
                 $(`#kpiPositionTypePolarization-${kpi.id}`).text(data.polarization);
                 
                 const newOption = new Option(data.kpi, data.id, true, true);
-                $(`#kpiPositionTypeId-${kpi.id}`).append(newOption).trigger('change');
+                $(`#kpiPositionTypeKpiId-${kpi.id}`).append(newOption).trigger('change');
             }
 
         }
@@ -816,7 +818,7 @@
         $(document).on('click', '.btn-edit', function() {
             const id = $(this).attr('data-kpi-position-type-id');
             
-            const selectedOption = $(`#kpiPositionTypeId-${id}`).find('option:selected');
+            const selectedOption = $(`#kpiPositionTypeKpiId-${id}`).find('option:selected');
             const selectedValue = selectedOption.val();
             const selectedText = selectedOption.text();
             const dataBeforeEdit = {
@@ -837,7 +839,7 @@
             const perspectiveId = $(this).attr('data-kpi-position-type-perspective-id');
             const objectiveId = $(this).attr('data-kpi-position-type-objective-id');
         
-            const kpiId = $(`#kpiPositionTypeId-${id}`).val();
+            const kpiId = $(`#kpiPositionTypeKpiId-${id}`).val();
             const weight = $(`#kpiPositionTypeWeight-${id}`).val();
             
             const data = {
@@ -930,7 +932,7 @@
         if (dataBeforeEditIndex !== -1) {
             const dataBeforeEdit = dataKpiBeforeEdit[dataBeforeEditIndex];
             const newOption = new Option(dataBeforeEdit.kpi_name, dataBeforeEdit.kpi_id, true, true);
-            $(`#kpiPositionTypeId-${id}`).append(newOption).trigger('change');
+            $(`#kpiPositionTypeKpiId-${id}`).append(newOption).trigger('change');
             $(`#kpiPositionTypeWeight-${id}`).val(dataBeforeEdit.weight);
             
             dataKpiBeforeEdit.splice(dataBeforeEditIndex, 1);

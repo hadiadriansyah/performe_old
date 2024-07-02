@@ -13,6 +13,10 @@ class Kpi_individual_repository implements Kpi_individual_repository_interface {
 
     public function __construct() {
         $CI =& get_instance();
+        $CI->load->model('Kpi_individual_model');
+        $this->model = $CI->Kpi_individual_model;
+        $CI->load->model('Kpi_unit_model');
+        $this->kpi_unit_model = $CI->Kpi_unit_model;
         $CI->load->model('Pa_individual_model');
         $this->pa_individual_model = $CI->Pa_individual_model;
         $CI->load->model('Hist_pa_individual_model');
@@ -33,22 +37,20 @@ class Kpi_individual_repository implements Kpi_individual_repository_interface {
 
     #####
 
+    public function get_kpi_individual_by_pa_id($id) {
+        return $this->model->get_by_pa_id($id);
+    }
+
+    public function get_kpi_unit($data) {
+        return $this->kpi_unit_model->get_kpi_unit($data, true);
+    }
+
     public function get_temp_position_hist_by_employee_id($employee_id) {
         return $this->hist_pelaksana_jabatan_model->get_by_employee_id($employee_id);
     }
 
     public function get_position_hist_by_employee_id($employee_id) {
         return $this->hist_jabatan_model->get_by_employee_id($employee_id);
-    }
-
-    #####
-
-    public function get_year_period_options($search, $page) {
-        return $this->year_period_model->get_options($search, $page);
-    }
-
-    public function get_employee_options($search, $page) {
-        return $this->emp_data_peg_model->get_options($search, $page);
     }
 
     public function get_position_by_id($id) {
@@ -61,5 +63,15 @@ class Kpi_individual_repository implements Kpi_individual_repository_interface {
 
     public function get_pa_individual($year_period_id, $employee_id) {
         return $this->pa_individual_model->get_by_year_period_id_employee_id($year_period_id, $employee_id);
+    }
+
+    #####
+
+    public function get_year_period_options($search, $page) {
+        return $this->year_period_model->get_options($search, $page);
+    }
+
+    public function get_employee_options($search, $page) {
+        return $this->emp_data_peg_model->get_options($search, $page);
     }
 }

@@ -5,8 +5,11 @@ class Pa_individual_model extends CI_Model {
     protected $table = 'npm_pa_individuals';
 
     public function get_by_year_period_id_employee_id($year_period_id, $employee_id) {
-        $this->db->select("*")
+        $this->db->select("{$this->table}.*, mj.nm_jabatan as position_name, muku.nm_unit_kerja as unit_name, mukp.nm_unit_kerja as placement_unit_name")
                     ->from($this->table)
+                    ->join('md_jabatan mj', "{$this->table}.position_id = mj.id", 'left')
+                    ->join('md_unit_kerja muku', "{$this->table}.unit_id = muku.id", 'left')
+                    ->join('md_unit_kerja mukp', "{$this->table}.placement_unit_id = mukp.id", 'left')
                     ->where('year_period_id', $year_period_id)
                     ->where('employee_id', $employee_id);
         return $this->db->get()->result();
